@@ -40,16 +40,23 @@ Edit `.env` (top section) before first run:
 - `MUSICBRAINZ_WEB_SERVER_PORT` ('5000' default, edit as needed)
 - Optional provider keys for LM-Bridge (FANART/LASTFM/SPOTIFY)
 
-### 4. Start the containers download and startup
+### 4. Start the containers download and startup - LARGE / HOURS
 
 ```
 docker compose up -d
 ```
 
+When finished, your MusicBrainz mirror will be available at http://HOST_IP_Address:5000
+The Lidarr API bridge will accept connections at the same address on port 5001
+
+> [!TIP]
+>
+> Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own (sub)domain to reach your MusicBrainz mirror on port 80 or 443 (HTTPS).
+
 ## Notes
 
-- First import and indexing can take hours and require large disk (hundreds of GB).
-- This stack is intended for private use on a LAN behind a firewall; do not expose services publicly without hardening.
+- First import and indexing will take hours and requires up to 300GB of available storage
+- This stack is intended for private use on a LAN behind a firewall; don't expose services publicly without hardening
 
 ### Source code, licenses and development repo:
 
