@@ -1,0 +1,70 @@
+# Description: Bootstrap DB, materialized tables, and prebuilt Solr indexes
+
+services:
+  bootstrap:
+    build:
+      context: build/bootstrap
+      args:
+        - MUSICBRAINZ_SERVER_VERSION=${MUSICBRAINZ_SERVER_VERSION:-v-2026-01-19.0}
+        - MUSICBRAINZ_BUILD_SEQUENCE=${MUSICBRAINZ_BUILD_SEQUENCE:-1}
+    env_file:
+      - ./default/postgres.env
+    environment:
+      - MUSICBRAINZ_BOOTSTRAP_DB=${MUSICBRAINZ_BOOTSTRAP_DB:-1}
+      - MUSICBRAINZ_BOOTSTRAP_FETCH_DUMPS=${MUSICBRAINZ_BOOTSTRAP_FETCH_DUMPS:-1}
+      - MUSICBRAINZ_BOOTSTRAP_MATERIALIZED=${MUSICBRAINZ_BOOTSTRAP_MATERIALIZED:-1}
+      - MUSICBRAINZ_BOOTSTRAP_WGET_OPTIONS=${MUSICBRAINZ_BOOTSTRAP_WGET_OPTIONS:-}
+      - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
+      - MUSICBRAINZ_BOOTSTRAP_MATERIALIZED_MARKER=${MUSICBRAINZ_BOOTSTRAP_MATERIALIZED_MARKER:-/media/dbdump/.bootstrap.materialized.done}
+      - MUSICBRAINZ_BOOTSTRAP_MARKER=${MUSICBRAINZ_BOOTSTRAP_MARKER:-/media/dbdump/.bootstrap.done}
+    volumes:
+      - dbdump:/media/dbdump
+    command: ["bootstrap.sh"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_started
+
+  search-bootstrap:
+    build:
+      context: build/solr
+      args:
+        - MB_SOLR_VERSION=${MB_SOLR_VERSION:-4.1.0}
+    image: musicbrainz-docker_search:${MB_SOLR_VERSION:-4.1.0}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["/usr/local/bin/bootstrap-indexes.sh"]
+    environment:
+      - MUSICBRAINZ_BOOTSTRAP_SEARCH_INDEXES=${MUSICBRAINZ_BOOTSTRAP_SEARCH_INDEXES:-download}
+      - MUSICBRAINZ_BOOTSTRAP_WAIT_FOR_DB=${MUSICBRAINZ_BOOTSTRAP_WAIT_FOR_DB:-1}
+      - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
+      - MUSICBRAINZ_BOOTSTRAP_SEARCH_MARKER=${MUSICBRAINZ_BOOTSTRAP_SEARCH_MARKER:-/var/cache/musicbrainz/solr-backups/.bootstrap.solr.done}
+      - MUSICBRAINZ_BOOTSTRAP_SOLR_CLEANUP=${MUSICBRAINZ_BOOTSTRAP_SOLR_CLEANUP:-0}
+    volumes:
+      - solrdata:/var/solr
+      - solrdump:/var/cache/musicbrainz/solr-backups
+      - dbdump:/media/dbdump:ro
+      - ./build/solr/scripts/bootstrap-indexes.sh:/usr/local/bin/bootstrap-indexes.sh:ro
+    restart: "no"
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+
+  search:
+    depends_on:
+      search-bootstrap:
+        condition: service_completed_successfully
+
+  musicbrainz:
+    depends_on:
+      db:
+        condition: service_started
+      mq:
+        condition: service_started
+      search:
+        condition: service_started
+      redis:
+        condition: service_started
+      bootstrap:
+        condition: service_completed_successfully
+      search-bootstrap:
+        condition: service_completed_successfully

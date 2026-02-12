@@ -1,0 +1,4 @@
+# Description: Network override (generated)
+networks:
+  default:
+    driver: bridge

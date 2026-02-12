@@ -1,0 +1,21 @@
+# Description: Scheduled search reindexing via SIR
+
+services:
+  indexer-cron:
+    build: build/sir
+    env_file:
+      - ./default/postgres.env
+    environment:
+      - MUSICBRAINZ_INDEXING_ENABLED=${MUSICBRAINZ_INDEXING_ENABLED:-0}
+      - MUSICBRAINZ_INDEXING_TIME=${MUSICBRAINZ_INDEXING_TIME:-01:00}
+      - MUSICBRAINZ_INDEXING_DAY=${MUSICBRAINZ_INDEXING_DAY:-Sunday}
+      - MUSICBRAINZ_INDEXING_FREQUENCY=${MUSICBRAINZ_INDEXING_FREQUENCY:-weekly}
+      - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
+    volumes:
+      - ${SIR_CONFIG_PATH:-./default/indexer.ini}:/code/config.ini
+      - dbdump:/media/dbdump:ro
+    command: ["/usr/local/bin/indexer-cron.sh"]
+    restart: unless-stopped
+    depends_on:
+      - db
+      - search

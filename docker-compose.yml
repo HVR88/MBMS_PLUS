@@ -1,0 +1,134 @@
+# Description: Default compose file, with host port for musicbrainz
+
+volumes:
+  mqdata:
+    driver: local
+  pgdata:
+    driver: local
+  solrdata:
+    driver: local
+  dbdump:
+    driver: local
+  solrdump:
+    driver: local
+
+services:
+  db:
+    build:
+      context: build/postgres-prebuilt
+    image: musicbrainz-docker_db:${POSTGRES_VERSION:-16}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    restart: unless-stopped
+    command: postgres -c "shared_buffers=${POSTGRES_SHARED_BUFFERS:-4GB}" -c "shared_preload_libraries=pg_amqp.so"
+    env_file:
+      - ./default/postgres.env
+    shm_size: "${POSTGRES_SHM_SIZE:-4GB}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    expose:
+      - "5432"
+
+  musicbrainz:
+    build:
+      context: build/musicbrainz-prebuilt
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "50"
+    ports:
+      - "${MUSICBRAINZ_DOCKER_HOST_IPADDRCOL:-}${MUSICBRAINZ_WEB_SERVER_PORT:-5000}:5000"
+    volumes:
+      - dbdump:/media/dbdump
+      - solrdump:/var/cache/musicbrainz/solr-backups:ro
+    restart: unless-stopped
+    env_file:
+      - ./default/postgres.env
+    environment:
+      - MUSICBRAINZ_BASE_FTP_URL=${MUSICBRAINZ_BASE_FTP_URL:-}
+      - MUSICBRAINZ_BASE_DOWNLOAD_URL=${MUSICBRAINZ_BASE_DOWNLOAD_URL:-https://data.metabrainz.org/pub/musicbrainz}
+      - MUSICBRAINZ_CAA_BASE_URL=${MUSICBRAINZ_CAA_BASE_URL:-}
+      - MUSICBRAINZ_SERVER_PROCESSES=${MUSICBRAINZ_SERVER_PROCESSES:-10}
+      - STATIC_RESOURCES_LOCATION=${STATIC_RESOURCES_LOCATION:-/static/build}
+      - MUSICBRAINZ_REPLICATION_ENABLED=${MUSICBRAINZ_REPLICATION_ENABLED:-0}
+      - MUSICBRAINZ_REPLICATION_TIME=${MUSICBRAINZ_REPLICATION_TIME:-03:00}
+      - MUSICBRAINZ_REPLICATION_SCHEDULE=${MUSICBRAINZ_REPLICATION_SCHEDULE:-}
+      - MUSICBRAINZ_REPLICATION_TOKEN=${MUSICBRAINZ_REPLICATION_TOKEN:-}
+      - MUSICBRAINZ_USE_PROXY=1
+      - MUSICBRAINZ_WEB_SERVER_HOST=${MUSICBRAINZ_WEB_SERVER_HOST:-localhost}
+      - MUSICBRAINZ_WEB_SERVER_PORT=${MUSICBRAINZ_WEB_SERVER_PORT:-5000}
+    depends_on:
+      - db
+      - mq
+      - search
+      - redis
+
+  indexer:
+    build: build/sir
+    env_file:
+      - ./default/postgres.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    volumes:
+      - ${SIR_CONFIG_PATH:-./default/indexer.ini}:/code/config.ini
+    depends_on:
+      - db
+      - mq
+      - search
+
+  search:
+    build:
+      context: build/solr
+      args:
+        - MB_SOLR_VERSION=${MB_SOLR_VERSION:-4.1.0}
+    image: musicbrainz-docker_search:${MB_SOLR_VERSION:-4.1.0}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    restart: unless-stopped
+    environment:
+      - SOLR_HEAP=${SOLR_HEAP:-4g}
+      - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
+    mem_swappiness: 1
+    expose:
+      - "8983"
+    volumes:
+      - dbdump:/media/dbdump:ro
+      - solrdata:/var/solr
+      - solrdump:/var/cache/musicbrainz/solr-backups
+
+  mq:
+    build: build/rabbitmq
+    hostname: "mq"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    restart: unless-stopped
+    ulimits:
+      nofile: 65536
+    volumes:
+      - mqdata:/var/lib/rabbitmq
+    expose:
+      - "5672"
+
+  redis:
+    image: redis:3-alpine
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    restart: unless-stopped
+    expose:
+      - "6379"

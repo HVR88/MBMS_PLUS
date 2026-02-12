@@ -1,0 +1,26 @@
+# Description: Docker Hub image overrides for deploy usage
+
+services:
+  db:
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-db:${MBMS_VERSION:-latest}
+
+  musicbrainz:
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-musicbrainz:${MBMS_VERSION:-latest}
+
+  bootstrap:
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-bootstrap:${MBMS_VERSION:-latest}
+
+  search:
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-search:${MBMS_VERSION:-latest}
+
+  search-bootstrap:
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-search:${MBMS_VERSION:-latest}
+
+  indexer:
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-indexer:${MBMS_VERSION:-latest}
+
+  indexer-cron:
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-indexer:${MBMS_VERSION:-latest}
+
+  mq:
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-mq:${MBMS_VERSION:-latest}
