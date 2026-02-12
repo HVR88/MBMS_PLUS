@@ -26,3 +26,7 @@ Edit `.env` (top section) before first run:
 
 - First import and indexing can take hours and require large disk (hundreds of GB).
 - This stack is intended for private use on a LAN behind a firewall; do not expose services publicly without hardening.
+
+### Source code, licenses and development repo:
+
+https://github.com/HVR88/musicbrainz_stack-DEV
