@@ -1,6 +1,7 @@
 # Description: Default compose file, with host port for musicbrainz
 
-x-require-env: ${COMPOSE_PROFILES?You need to edit the .env file before starting. Uncomment COMPOSE_PROFILES=mbms.}
+x-require-env: ${COMPOSE_PROFILES}
+x-require-env-guard: ${COMPOSE_PROFILES:?You need to edit the .env file before starting. Uncomment COMPOSE_PROFILES=mbms.}
 
 volumes:
   mqdata:
@@ -29,6 +30,8 @@ services:
     command: postgres -c "shared_buffers=${POSTGRES_SHARED_BUFFERS:-4GB}" -c "shared_preload_libraries=pg_amqp.so"
     env_file:
       - ./default/postgres.env
+    environment:
+      - TZ=${TZ:-America/Toronto}
     shm_size: "${POSTGRES_SHM_SIZE:-4GB}"
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -53,6 +56,7 @@ services:
     env_file:
       - ./default/postgres.env
     environment:
+      - TZ=${TZ:-America/Toronto}
       - MUSICBRAINZ_BASE_FTP_URL=${MUSICBRAINZ_BASE_FTP_URL:-}
       - MUSICBRAINZ_BASE_DOWNLOAD_URL=${MUSICBRAINZ_BASE_DOWNLOAD_URL:-https://data.metabrainz.org/pub/musicbrainz}
       - MUSICBRAINZ_CAA_BASE_URL=${MUSICBRAINZ_CAA_BASE_URL:-}
@@ -76,6 +80,8 @@ services:
     build: build/sir
     env_file:
       - ./default/postgres.env
+    environment:
+      - TZ=${TZ:-America/Toronto}
     logging:
       driver: "json-file"
       options:
@@ -102,6 +108,7 @@ services:
         max-file: "10"
     restart: unless-stopped
     environment:
+      - TZ=${TZ:-America/Toronto}
       - SOLR_HEAP=${SOLR_HEAP:-4g}
       - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
     mem_swappiness: 1
@@ -121,6 +128,8 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
+    environment:
+      - TZ=${TZ:-America/Toronto}
     restart: unless-stopped
     ulimits:
       nofile: 65536
@@ -137,6 +146,8 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
+    environment:
+      - TZ=${TZ:-America/Toronto}
     restart: unless-stopped
     expose:
       - "6379"

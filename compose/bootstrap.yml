@@ -7,7 +7,7 @@ services:
     command:
       - |
         if [ -z "${COMPOSE_PROFILES:-}" ] || ! printf ',%s,' "${COMPOSE_PROFILES}" | grep -q ',mbms,'; then
-          echo "Please uncomment COMPOSE_PROFILES=mbms in .env before running docker compose up." >&2
+          echo "You need to edit the .env file before starting. Uncomment COMPOSE_PROFILES=mbms." >&2
           exit 1
         fi
         if [ -n "${MUSICBRAINZ_REPLICATION_ENABLED:-1}" ] && [ "${MUSICBRAINZ_REPLICATION_ENABLED}" != "0" ] && [ "${MUSICBRAINZ_REPLICATION_ENABLED}" != "false" ]; then
@@ -31,6 +31,7 @@ services:
     env_file:
       - ./default/postgres.env
     environment:
+      - TZ=${TZ:-America/Toronto}
       - MUSICBRAINZ_BOOTSTRAP_DB=${MUSICBRAINZ_BOOTSTRAP_DB:-1}
       - MUSICBRAINZ_BOOTSTRAP_FETCH_DUMPS=${MUSICBRAINZ_BOOTSTRAP_FETCH_DUMPS:-1}
       - MUSICBRAINZ_BOOTSTRAP_MATERIALIZED=${MUSICBRAINZ_BOOTSTRAP_MATERIALIZED:-1}
@@ -58,6 +59,7 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: ["/usr/local/bin/bootstrap-indexes.sh"]
     environment:
+      - TZ=${TZ:-America/Toronto}
       - MUSICBRAINZ_BOOTSTRAP_SEARCH_INDEXES=${MUSICBRAINZ_BOOTSTRAP_SEARCH_INDEXES:-download}
       - MUSICBRAINZ_BOOTSTRAP_WAIT_FOR_DB=${MUSICBRAINZ_BOOTSTRAP_WAIT_FOR_DB:-1}
       - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
