@@ -7,7 +7,7 @@ services:
     command:
       - |
         if [ -n "${NO_OP:-}" ]; then
-          echo "NO_OP is set. Remove the NO_OP line from .env to enable docker compose up." >&2
+          echo "Please review and edit the .env file before proceeding with docker compose up." >&2
           exit 1
         fi
         if [ -n "${MUSICBRAINZ_REPLICATION_ENABLED:-1}" ] && [ "${MUSICBRAINZ_REPLICATION_ENABLED}" != "0" ] && [ "${MUSICBRAINZ_REPLICATION_ENABLED}" != "false" ]; then
