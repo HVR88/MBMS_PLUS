@@ -12,10 +12,10 @@
 
 ## Requirements
 
-- Docker Host - examples:
-  - Linux server / VM / LXC with Docker Compose
+- Docker Host, engine & management - examples:
+  - Linux server / VM / LXC with Docker Compose, Portainer, Yacht, etc.
   - Unraid + Docker Compose Manager
-  - Portainer
+  - TrueNAS
 - 300 GB of available storage (400-500 GB recommended)
 - 8 GB of memory availbale to the container
 - 2-4 hours installation time
