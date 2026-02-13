@@ -106,6 +106,8 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
+    ulimits:
+      nofile: 65536
     restart: unless-stopped
     environment:
       - TZ=${TZ:-America/Toronto}

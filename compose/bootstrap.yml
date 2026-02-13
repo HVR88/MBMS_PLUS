@@ -71,6 +71,8 @@ services:
       - solrdump:/var/cache/musicbrainz/solr-backups
       - dbdump:/media/dbdump:ro
       - ./build/solr/scripts/bootstrap-indexes.sh:/usr/local/bin/bootstrap-indexes.sh:ro
+    ulimits:
+      nofile: 65536
     restart: "no"
     depends_on:
       preflight:
