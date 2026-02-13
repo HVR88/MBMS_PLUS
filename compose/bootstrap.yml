@@ -65,6 +65,7 @@ services:
       - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
       - MUSICBRAINZ_BOOTSTRAP_SEARCH_MARKER=${MUSICBRAINZ_BOOTSTRAP_SEARCH_MARKER:-/var/cache/musicbrainz/solr-backups/.bootstrap.solr.done}
       - MUSICBRAINZ_BOOTSTRAP_SOLR_CLEANUP=${MUSICBRAINZ_BOOTSTRAP_SOLR_CLEANUP:-0}
+      - SOLR_HEAP=${SOLR_HEAP:-4g}
     volumes:
       - solrdata:/var/solr
       - solrdump:/var/cache/musicbrainz/solr-backups
