@@ -14,6 +14,13 @@ _To allow for future replication and updates, it's recommended to install onto a
 >
 > When deploying from a terminal, use screen or tmux so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
 
+## Requirements
+
+- Linux server / VM / LXC with Docker Compose
+- Unraid + Docker Compose Manager
+- Portainer
+- TrueNAS
+
 ## Quick start
 
 ### 1. Register for MusicBrainz access (REQUIRED)
