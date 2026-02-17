@@ -36,6 +36,7 @@ services:
       USE_CACHE: "${USE_CACHE:-true}"
       ENABLE_STATS: "${ENABLE_STATS:-false}"
       ROOT_PATH: "${ROOT_PATH:-}"
+      MBMS_PLUS_VERSION: "${MBMS_PLUS_VERSION:-}"
 
       # --- Redis ---
       REDIS_HOST: "${REDIS_HOST:-redis}"
