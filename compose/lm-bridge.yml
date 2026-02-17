@@ -53,6 +53,8 @@ services:
       # --- Postgres cache (lm_cache_db) ---
       POSTGRES_CACHE_HOST: "${LMBRIDGE_CACHE_HOST:-db}"
       POSTGRES_CACHE_PORT: "${LMBRIDGE_CACHE_PORT:-5432}"
+      POSTGRES_CACHE_USER: "${LMBRIDGE_CACHE_USER:-lmbridge}"
+      POSTGRES_CACHE_PASSWORD: "${LMBRIDGE_CACHE_PASSWORD:-lmbridge}"
 
       # --- External providers (fill in later) ---
       FANART_KEY: "${FANART_KEY:-}"
