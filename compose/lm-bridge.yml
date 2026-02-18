@@ -4,6 +4,7 @@ services:
   lmbridge-init:
     profiles: ["mbms"]
     image: ${LMBRIDGE_IMAGE:-espressomatic/lm-bridge:latest}
+    pull_policy: always
     entrypoint: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
     environment:
       TZ: ${TZ:-America/Toronto}
@@ -25,6 +26,7 @@ services:
   lmbridge:
     profiles: ["mbms"]
     image: ${LMBRIDGE_IMAGE:-espressomatic/lm-bridge:latest}
+    pull_policy: always
     ports:
       - "${LMBRIDGE_PORT:-5001}:5001"
     volumes:
