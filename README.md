@@ -34,9 +34,13 @@ git clone https://github.com/HVR88/MBMS_PLUS.git
 cd /opt/docker/MBMS_PLUS
 ```
 
-### 3. Minimally Configure .env file
+### 3. Copy and configure env file
 
-Edit `.env` (top section) before first run:
+Copy `example.env` to `.env`, then edit the top section before first run:
+
+```bash
+cp example.env .env
+```
 
 - **Uncomment `COMPOSE_PROFILES=mbms`**
 - **`MUSICBRAINZ_REPLICATION_TOKEN` (required for replication)**
