@@ -14,7 +14,7 @@
 
 - Linux server / VM / LXC with Docker support
 - 300 GB of available storage (400-500 GB recommended)
-- 8 GB of memory availbale to the container
+- 8 GB of memory available to the container
 - 2-4 hours installation time
 - MusicBrainz account and Data Feed access token
 
@@ -43,8 +43,8 @@ Copy `example.env` to `.env`, then edit the top section before first run:
 cp example.env .env
 ```
 
-- **Uncomment `COMPOSE_PROFILES=mbms`**
-- **`MUSICBRAINZ_REPLICATION_TOKEN` (required for replication)**
+- Uncomment the line **`COMPOSE_PROFILES=mbms`**
+- Set the **`MUSICBRAINZ_REPLICATION_TOKEN`** (required for replication)
 - `MUSICBRAINZ_WEB_SERVER_HOST` ('localhost' default, edit as needed)
 - `MUSICBRAINZ_WEB_SERVER_PORT` ('5000' default, edit as needed)
 - Optional provider keys/tokens for LM Bridge (TheAudioDB, Fanart, Last.FM, etc.)
@@ -52,7 +52,7 @@ cp example.env .env
 Only `.env` is user-maintained. The stack refreshes managed files (admin scripts,
 compose template, and defaults) automatically when you update.
 
-### 4. Download containers, build DB & startup
+### 4. Download containers, build DB & startup (!) This takes 2-4 hours
 
 ```
 docker compose up -d
@@ -60,7 +60,7 @@ docker compose up -d
 
 ## Wrap-up
 
-You can monitor the progress of the long compose jobs from another terminal:
+You can monitor the progress of the long first-time installation jobs from another terminal:
 
 ```
 docker compose logs -f --timestamps
@@ -74,8 +74,11 @@ docker compose logs -f --no-log-prefix --tail=200 \
 
 ```
 
+## Browser access / status
+
 When finished, your MusicBrainz mirror will be available at **http://HOST_IP:5000**
-<br>The Lidarr API bridge will accept connections at the same address on port 5001
+
+To check the status of LM bridge and MBMS, including version numbers, open the LM Bridge URL in your browser **http://HOST_IP:5001**
 
 > [!TIP]
 >
@@ -120,7 +123,7 @@ Lidarr is now using the Bridge API and you should see lightning-fast queries to 
 ## Notes
 
 - _The first import and database setup will take multiple hours and requires up to 300GB of available storage_
-- Building Materialized/denormalized tables consumes additioonal storage but offers significant performance improvements
+- Building Materialized/denormalized tables consumes additional storage but offers significant performance improvements
 - 60GB of pre-built search indexes are downloaded to save a significant amount of time building new indexes
 - _Continued (scheduled) replication and indexing is required to keep the database up-to-date and at optimal performance_
 - This stack is configured for private use on a LAN, behind a firewall
