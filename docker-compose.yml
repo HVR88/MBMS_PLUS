@@ -18,6 +18,8 @@ volumes:
     driver: local
   solrdump:
     driver: local
+  lmbridge-init-state:
+    driver: local
 
 services:
   assets:
@@ -308,6 +310,7 @@ services:
     ports:
       - "${LMBRIDGE_PORT:-5001}:5001"
     volumes:
+      - lmbridge-init-state:/metadata/init-state
       - ./.mbms/assets/MBMS_TAG_VERSION:/mbms/VERSION:ro
     environment:
       TZ: ${TZ:-America/Toronto}
