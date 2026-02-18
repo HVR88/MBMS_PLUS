@@ -6,6 +6,10 @@
 
 ## Introduction
 
+MBMB PLUS is a full stack MusicBrainz mirror server with LM Bridge, an API data bridge for Lidarr. LM Bridge packages the Lidarr Metadata API, and bridges queries to MusicBrainz database, allowing 100% local access to all metadata. That means no more issues with Lidarr database schemas, pre-caching or other nonsense. Just FAST LAN-based performance.
+
+LM Bridge also has a plugin for Lidarr for configuration, where you can additionally filter and manipulate media format data for all releases. Maybe you don't want vinyl variations showing up in releases? No problem, filter that out. Maybe you want large media lists to be pruned to focus only on the top candidates - that's easy too.
+
 > [!TIP]
 >
 > When deploying from a terminal, use _screen_ or _tmux_ so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
@@ -78,7 +82,7 @@ docker compose logs -f --no-log-prefix --tail=200 \
 
 When finished, your MusicBrainz mirror will be available at **http://HOST_IP:5000**
 
-To check the status of LM bridge and MBMS, including version numbers, open the LM Bridge URL in your browser **http://HOST_IP:5001**
+Visit **http://HOST_IP:5001** to check the status of LM&nbsp;Bridge and MBMS PLUS, including versions, schedules and filter settings
 
 > [!TIP]
 >
@@ -131,7 +135,7 @@ Lidarr is now using the Bridge API and you should see lightning-fast queries to 
 
 > [!NOTE]
 >
-> MBMS PLUS is for personal use: **NO COMMERCIAL OR BUSINESS USE IS PERMITTED.**
+> MBMS PLUS is for personal use only: **NO COMMERCIAL OR BUSINESS USE IS PERMITTED**
 
 ### Source code, licenses and development repo:
 
