@@ -25,13 +25,14 @@
 - Create an account at https://MusicBrainz.com
 - Get your _Live Data Feed Access Token_ from Metabrainz https://metabrainz.org/profile
 
-### 2. Download the MBMS_PLUS project
+### 2. Download the MBMS_PLUS compose files (no git required)
+
+Create a folder and download the latest `docker-compose.yml` and `example.env`
+from the MBMS_PLUS release assets (or the raw files in this repo).
 
 ```
-mkdir -p /opt/docker/
-cd /opt/docker/
-git clone https://github.com/HVR88/MBMS_PLUS.git
-cd /opt/docker/MBMS_PLUS
+mkdir -p /opt/docker/mbms-plus
+cd /opt/docker/mbms-plus
 ```
 
 ### 3. Copy and configure env file
@@ -47,6 +48,9 @@ cp example.env .env
 - `MUSICBRAINZ_WEB_SERVER_HOST` ('localhost' default, edit as needed)
 - `MUSICBRAINZ_WEB_SERVER_PORT` ('5000' default, edit as needed)
 - Optional provider keys/tokens for LM-Bridge (Cover Art Archive/Fanart/Last.FM)
+
+Only `.env` is user-maintained. The stack refreshes managed files (admin scripts,
+compose template, and defaults) automatically when you update.
 
 ### 4. Download containers, build DB & startup
 
@@ -77,6 +81,18 @@ When finished, your MusicBrainz mirror will be available at **http://HOST_IP:500
 >
 > Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own (sub)domain to reach your MusicBrainz mirror on port 80 (HTTP) or 443 (HTTPS) on your LAN
 
+## Updates
+
+Pull the latest images and restart:
+
+```
+docker compose pull
+docker compose up -d
+```
+
+If a release updates `docker-compose.yml`, run `docker compose up -d` again
+after the first restart so the new compose file is applied.
+
 ## Notes
 
 - _The first import and database setup will take multiple hours and requires up to 300GB of available storage_
@@ -96,7 +112,7 @@ https://github.com/HVR88/musicbrainz_stack-DEV
 
 ## Maintenance (optional)
 
-These helper scripts live in `admin/` in the deploy repo and can be used at any time while the stack is running:
+These helper scripts are synced into `admin/` automatically when the stack starts or updates:
 
 - `admin/status` (show container status)
 - `admin/logs [services...]` (follow logs)

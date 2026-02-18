@@ -1,7 +1,11 @@
-# Description: Default compose file, with host port for musicbrainz
+# Description: Deploy compose file with managed assets sync
 
 x-require-env: ${COMPOSE_PROFILES}
 x-require-env-guard: ${COMPOSE_PROFILES:?You need to edit the .env file before starting. Uncomment COMPOSE_PROFILES=mbms.}
+
+x-assets-depends: &assets_depends
+  assets:
+    condition: service_completed_successfully
 
 volumes:
   mqdata:
@@ -16,11 +20,39 @@ volumes:
     driver: local
 
 services:
+  assets:
+    profiles: ["mbms"]
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-assets:latest
+    pull_policy: always
+    volumes:
+      - ./:/out
+    restart: "no"
+
+  preflight:
+    image: alpine:3.20
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        if [ -z "${COMPOSE_PROFILES:-}" ] || ! printf ',%s,' "${COMPOSE_PROFILES}" | grep -q ',mbms,'; then
+          echo "You need to edit the .env file before starting. Uncomment COMPOSE_PROFILES=mbms." >&2
+          exit 1
+        fi
+        if [ -n "${MUSICBRAINZ_REPLICATION_ENABLED:-1}" ] && [ "${MUSICBRAINZ_REPLICATION_ENABLED}" != "0" ] && [ "${MUSICBRAINZ_REPLICATION_ENABLED}" != "false" ]; then
+          if [ -z "${MUSICBRAINZ_REPLICATION_TOKEN:-}" ]; then
+            echo "Missing MUSICBRAINZ_REPLICATION_TOKEN. Set it in .env before running docker compose up." >&2
+            exit 1
+          fi
+        fi
+        echo "OK: replication token check passed."
+    env_file:
+      - ./.env
+    restart: "no"
+    depends_on:
+      <<: *assets_depends
+
   db:
     profiles: ["mbms"]
-    build:
-      context: build/postgres-prebuilt
-    image: musicbrainz-docker_db:${POSTGRES_VERSION:-16}
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-db:latest
     logging:
       driver: "json-file"
       options:
@@ -28,79 +60,109 @@ services:
         max-file: "10"
     restart: unless-stopped
     command: postgres -c "shared_buffers=${POSTGRES_SHARED_BUFFERS:-4GB}" -c "shared_preload_libraries=pg_amqp.so"
-    env_file:
-      - ./default/postgres.env
     environment:
       - TZ=${TZ:-America/Toronto}
+      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
+      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
     shm_size: "${POSTGRES_SHM_SIZE:-4GB}"
     volumes:
       - pgdata:/var/lib/postgresql/data
     expose:
       - "5432"
-
-  musicbrainz:
-    profiles: ["mbms"]
-    build:
-      context: build/musicbrainz-prebuilt
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "50"
-    ports:
-      - "${MUSICBRAINZ_DOCKER_HOST_IPADDRCOL:-}${MUSICBRAINZ_WEB_SERVER_PORT:-5000}:5000"
-    volumes:
-      - dbdump:/media/dbdump
-      - solrdump:/var/cache/musicbrainz/solr-backups:ro
-    restart: unless-stopped
-    env_file:
-      - ./default/postgres.env
-    environment:
-      - TZ=${TZ:-America/Toronto}
-      - MUSICBRAINZ_BASE_FTP_URL=${MUSICBRAINZ_BASE_FTP_URL:-}
-      - MUSICBRAINZ_BASE_DOWNLOAD_URL=${MUSICBRAINZ_BASE_DOWNLOAD_URL:-https://data.metabrainz.org/pub/musicbrainz}
-      - MUSICBRAINZ_CAA_BASE_URL=${MUSICBRAINZ_CAA_BASE_URL:-}
-      - MUSICBRAINZ_SERVER_PROCESSES=${MUSICBRAINZ_SERVER_PROCESSES:-10}
-      - STATIC_RESOURCES_LOCATION=${STATIC_RESOURCES_LOCATION:-/static/build}
-      - MUSICBRAINZ_REPLICATION_ENABLED=${MUSICBRAINZ_REPLICATION_ENABLED:-0}
-      - MUSICBRAINZ_REPLICATION_TIME=${MUSICBRAINZ_REPLICATION_TIME:-03:00}
-      - MUSICBRAINZ_REPLICATION_SCHEDULE=${MUSICBRAINZ_REPLICATION_SCHEDULE:-}
-      - MUSICBRAINZ_REPLICATION_TOKEN=${MUSICBRAINZ_REPLICATION_TOKEN:-}
-      - MUSICBRAINZ_USE_PROXY=1
-      - MUSICBRAINZ_WEB_SERVER_HOST=${MUSICBRAINZ_WEB_SERVER_HOST:-localhost}
-      - MUSICBRAINZ_WEB_SERVER_PORT=${MUSICBRAINZ_WEB_SERVER_PORT:-5000}
     depends_on:
-      - db
-      - mq
-      - search
-      - redis
+      <<: *assets_depends
 
-  indexer:
+  mq:
     profiles: ["mbms"]
-    build: build/sir
-    env_file:
-      - ./default/postgres.env
-    environment:
-      - TZ=${TZ:-America/Toronto}
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-mq:latest
+    hostname: "mq"
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "10"
+    environment:
+      - TZ=${TZ:-America/Toronto}
+    restart: unless-stopped
+    ulimits:
+      nofile: 65536
     volumes:
-      - ${SIR_CONFIG_PATH:-./default/indexer.ini}:/code/config.ini
+      - mqdata:/var/lib/rabbitmq
+    expose:
+      - "5672"
     depends_on:
-      - db
-      - mq
-      - search
+      <<: *assets_depends
+
+  redis:
+    profiles: ["mbms"]
+    image: redis:3-alpine
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+    environment:
+      - TZ=${TZ:-America/Toronto}
+    restart: unless-stopped
+    expose:
+      - "6379"
+    depends_on:
+      <<: *assets_depends
+
+  bootstrap:
+    profiles: ["mbms"]
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-bootstrap:latest
+    environment:
+      - TZ=${TZ:-America/Toronto}
+      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
+      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
+      - MUSICBRAINZ_BOOTSTRAP_DB=${MUSICBRAINZ_BOOTSTRAP_DB:-1}
+      - MUSICBRAINZ_BOOTSTRAP_FETCH_DUMPS=${MUSICBRAINZ_BOOTSTRAP_FETCH_DUMPS:-1}
+      - MUSICBRAINZ_BOOTSTRAP_MATERIALIZED=${MUSICBRAINZ_BOOTSTRAP_MATERIALIZED:-1}
+      - MUSICBRAINZ_BOOTSTRAP_WGET_OPTIONS=${MUSICBRAINZ_BOOTSTRAP_WGET_OPTIONS:-}
+      - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
+      - MUSICBRAINZ_BOOTSTRAP_MATERIALIZED_MARKER=${MUSICBRAINZ_BOOTSTRAP_MATERIALIZED_MARKER:-/media/dbdump/.bootstrap.materialized.done}
+      - MUSICBRAINZ_BOOTSTRAP_MARKER=${MUSICBRAINZ_BOOTSTRAP_MARKER:-/media/dbdump/.bootstrap.done}
+    volumes:
+      - dbdump:/media/dbdump
+    command: ["bootstrap.sh"]
+    restart: "no"
+    depends_on:
+      <<: *assets_depends
+      preflight:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+
+  search-bootstrap:
+    profiles: ["mbms"]
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-search:latest
+    entrypoint: ["/usr/local/bin/bootstrap-indexes.sh"]
+    environment:
+      - TZ=${TZ:-America/Toronto}
+      - MUSICBRAINZ_BOOTSTRAP_SEARCH_INDEXES=${MUSICBRAINZ_BOOTSTRAP_SEARCH_INDEXES:-download}
+      - MUSICBRAINZ_BOOTSTRAP_WAIT_FOR_DB=${MUSICBRAINZ_BOOTSTRAP_WAIT_FOR_DB:-1}
+      - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
+      - MUSICBRAINZ_BOOTSTRAP_SEARCH_MARKER=${MUSICBRAINZ_BOOTSTRAP_SEARCH_MARKER:-/var/cache/musicbrainz/solr-backups/.bootstrap.solr.done}
+      - MUSICBRAINZ_BOOTSTRAP_SOLR_CLEANUP=${MUSICBRAINZ_BOOTSTRAP_SOLR_CLEANUP:-0}
+      - SOLR_HEAP=${SOLR_HEAP:-4g}
+    volumes:
+      - solrdata:/var/solr
+      - solrdump:/var/cache/musicbrainz/solr-backups
+      - dbdump:/media/dbdump:ro
+    ulimits:
+      nofile: 65536
+    restart: "no"
+    depends_on:
+      <<: *assets_depends
+      preflight:
+        condition: service_completed_successfully
+      bootstrap:
+        condition: service_completed_successfully
 
   search:
     profiles: ["mbms"]
-    build:
-      context: build/solr
-      args:
-        - MB_SOLR_VERSION=${MB_SOLR_VERSION:-4.1.0}
-    image: musicbrainz-docker_search:${MB_SOLR_VERSION:-4.1.0}
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-search:latest
     logging:
       driver: "json-file"
       options:
@@ -120,36 +182,190 @@ services:
       - dbdump:/media/dbdump:ro
       - solrdata:/var/solr
       - solrdump:/var/cache/musicbrainz/solr-backups
+    depends_on:
+      <<: *assets_depends
+      search-bootstrap:
+        condition: service_completed_successfully
 
-  mq:
+  musicbrainz:
     profiles: ["mbms"]
-    build: build/rabbitmq
-    hostname: "mq"
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-musicbrainz:latest
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-        max-file: "10"
-    environment:
-      - TZ=${TZ:-America/Toronto}
-    restart: unless-stopped
-    ulimits:
-      nofile: 65536
+        max-size: "50m"
+        max-file: "50"
+    ports:
+      - "${MUSICBRAINZ_DOCKER_HOST_IPADDRCOL:-}${MUSICBRAINZ_WEB_SERVER_PORT:-5000}:5000"
     volumes:
-      - mqdata:/var/lib/rabbitmq
-    expose:
-      - "5672"
+      - dbdump:/media/dbdump
+      - solrdump:/var/cache/musicbrainz/solr-backups:ro
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-America/Toronto}
+      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
+      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
+      - MUSICBRAINZ_BASE_FTP_URL=${MUSICBRAINZ_BASE_FTP_URL:-}
+      - MUSICBRAINZ_BASE_DOWNLOAD_URL=${MUSICBRAINZ_BASE_DOWNLOAD_URL:-https://data.metabrainz.org/pub/musicbrainz}
+      - MUSICBRAINZ_CAA_BASE_URL=${MUSICBRAINZ_CAA_BASE_URL:-}
+      - MUSICBRAINZ_SERVER_PROCESSES=${MUSICBRAINZ_SERVER_PROCESSES:-10}
+      - STATIC_RESOURCES_LOCATION=${STATIC_RESOURCES_LOCATION:-/static/build}
+      - MUSICBRAINZ_REPLICATION_ENABLED=${MUSICBRAINZ_REPLICATION_ENABLED:-0}
+      - MUSICBRAINZ_REPLICATION_TIME=${MUSICBRAINZ_REPLICATION_TIME:-03:00}
+      - MUSICBRAINZ_REPLICATION_SCHEDULE=${MUSICBRAINZ_REPLICATION_SCHEDULE:-}
+      - MUSICBRAINZ_REPLICATION_TOKEN=${MUSICBRAINZ_REPLICATION_TOKEN:-}
+      - MUSICBRAINZ_USE_PROXY=1
+      - MUSICBRAINZ_WEB_SERVER_HOST=${MUSICBRAINZ_WEB_SERVER_HOST:-localhost}
+      - MUSICBRAINZ_WEB_SERVER_PORT=${MUSICBRAINZ_WEB_SERVER_PORT:-5000}
+    depends_on:
+      <<: *assets_depends
+      preflight:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      mq:
+        condition: service_started
+      search:
+        condition: service_started
+      redis:
+        condition: service_started
+      bootstrap:
+        condition: service_completed_successfully
+      search-bootstrap:
+        condition: service_completed_successfully
 
-  redis:
+  indexer:
     profiles: ["mbms"]
-    image: redis:3-alpine
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-indexer:latest
+    environment:
+      - TZ=${TZ:-America/Toronto}
+      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
+      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "10"
+    depends_on:
+      <<: *assets_depends
+      db:
+        condition: service_started
+      mq:
+        condition: service_started
+      search:
+        condition: service_started
+
+  indexer-cron:
+    profiles: ["mbms"]
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-indexer:latest
     environment:
       - TZ=${TZ:-America/Toronto}
+      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
+      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
+      - MUSICBRAINZ_INDEXING_ENABLED=${MUSICBRAINZ_INDEXING_ENABLED:-0}
+      - MUSICBRAINZ_INDEXING_TIME=${MUSICBRAINZ_INDEXING_TIME:-01:00}
+      - MUSICBRAINZ_INDEXING_DAY=${MUSICBRAINZ_INDEXING_DAY:-Sunday}
+      - MUSICBRAINZ_INDEXING_FREQUENCY=${MUSICBRAINZ_INDEXING_FREQUENCY:-weekly}
+      - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
+    volumes:
+      - dbdump:/media/dbdump:ro
+    command: ["/usr/local/bin/indexer-cron.sh"]
     restart: unless-stopped
-    expose:
-      - "6379"
+    depends_on:
+      <<: *assets_depends
+      db:
+        condition: service_started
+      search:
+        condition: service_started
+
+  lmbridge-init:
+    profiles: ["mbms"]
+    image: ${LMBRIDGE_IMAGE:-espressomatic/lm-bridge:latest}
+    pull_policy: always
+    entrypoint: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
+    environment:
+      TZ: ${TZ:-America/Toronto}
+      MB_DB_HOST: ${MB_DB_HOST:-db}
+      MB_DB_PORT: ${MB_DB_PORT:-5432}
+      MB_DB_USER: ${MB_DB_USER:-musicbrainz}
+      MB_DB_PASSWORD: ${MB_DB_PASSWORD:-musicbrainz}
+      MB_DB_NAME: ${MB_DB_NAME:-musicbrainz_db}
+      LMBRIDGE_CACHE_DB: ${LMBRIDGE_CACHE_DB:-lm_cache_db}
+      LMBRIDGE_CACHE_USER: ${LMBRIDGE_CACHE_USER:-lidarr}
+      LMBRIDGE_CACHE_PASSWORD: ${LMBRIDGE_CACHE_PASSWORD:-lidarr}
+    restart: "no"
+    depends_on:
+      <<: *assets_depends
+      db:
+        condition: service_started
+      bootstrap:
+        condition: service_completed_successfully
+
+  lmbridge:
+    profiles: ["mbms"]
+    image: ${LMBRIDGE_IMAGE:-espressomatic/lm-bridge:latest}
+    pull_policy: always
+    ports:
+      - "${LMBRIDGE_PORT:-5001}:5001"
+    volumes:
+      - ./.mbms/assets/MBMS_TAG_VERSION:/mbms/VERSION:ro
+    environment:
+      TZ: ${TZ:-America/Toronto}
+      # --- General ---
+      DEBUG: "${DEBUG:-false}"
+      PRODUCTION: "${PRODUCTION:-false}"
+      LIDARR_METADATA_CONFIG: "${LIDARR_METADATA_CONFIG:-BRIDGE}"
+      USE_CACHE: "${USE_CACHE:-true}"
+      ENABLE_STATS: "${ENABLE_STATS:-false}"
+      ROOT_PATH: "${ROOT_PATH:-}"
+      MBMS_PLUS_VERSION: "${MBMS_PLUS_VERSION:-}"
+      MBMS_PLUS_VERSION_FILE: "/mbms/VERSION"
+      MBMS_REPLICATION_SCHEDULE: "${MBMS_REPLICATION_SCHEDULE:-}"
+      MBMS_INDEX_SCHEDULE: "${MBMS_INDEX_SCHEDULE:-}"
+      MUSICBRAINZ_REPLICATION_ENABLED: "${MUSICBRAINZ_REPLICATION_ENABLED:-0}"
+      MUSICBRAINZ_REPLICATION_SCHEDULE: "${MUSICBRAINZ_REPLICATION_SCHEDULE:-}"
+      MUSICBRAINZ_REPLICATION_TIME: "${MUSICBRAINZ_REPLICATION_TIME:-03:00}"
+      MUSICBRAINZ_INDEXING_ENABLED: "${MUSICBRAINZ_INDEXING_ENABLED:-0}"
+      MUSICBRAINZ_INDEXING_SCHEDULE: "${MUSICBRAINZ_INDEXING_SCHEDULE:-}"
+      MUSICBRAINZ_INDEXING_FREQUENCY: "${MUSICBRAINZ_INDEXING_FREQUENCY:-weekly}"
+      MUSICBRAINZ_INDEXING_DAY: "${MUSICBRAINZ_INDEXING_DAY:-Sunday}"
+      MUSICBRAINZ_INDEXING_TIME: "${MUSICBRAINZ_INDEXING_TIME:-01:00}"
+
+      # --- Redis ---
+      REDIS_HOST: "${REDIS_HOST:-redis}"
+      REDIS_PORT: "${REDIS_PORT:-6379}"
+
+      # --- Solr mirror ---
+      PROVIDERS__SOLRSEARCHPROVIDER__1__SEARCH_SERVER: "${SOLR_URL:-http://search:8983/solr}"
+
+      # --- MusicBrainz DB creds (set these to match your mirror) ---
+      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_HOST: "${MB_DB_HOST:-db}"
+      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_PORT: "${MB_DB_PORT:-5432}"
+      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_USER: "${MB_DB_USER:-musicbrainz}"
+      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_PASSWORD: "${MB_DB_PASSWORD:-musicbrainz}"
+
+      # --- Postgres cache (lm_cache_db) ---
+      POSTGRES_CACHE_HOST: "${LMBRIDGE_CACHE_HOST:-db}"
+      POSTGRES_CACHE_PORT: "${LMBRIDGE_CACHE_PORT:-5432}"
+      POSTGRES_CACHE_USER: "${LMBRIDGE_CACHE_USER:-lmbridge}"
+      POSTGRES_CACHE_PASSWORD: "${LMBRIDGE_CACHE_PASSWORD:-lmbridge}"
+
+      # --- External providers (fill in later) ---
+      FANART_KEY: "${FANART_KEY:-}"
+      TADB_KEY: "${TADB_KEY:-2}"
+      LASTFM_KEY: "${LASTFM_KEY:-}"
+      LASTFM_SECRET: "${LASTFM_SECRET:-}"
+      SPOTIFY_ID: "${SPOTIFY_ID:-}"
+      SPOTIFY_SECRET: "${SPOTIFY_SECRET:-}"
+      SPOTIFY_REDIRECT_URL: "${SPOTIFY_REDIRECT_URL:-http://HOST_IP:5001}"
+    restart: unless-stopped
+    depends_on:
+      <<: *assets_depends
+      lmbridge-init:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
+      search:
+        condition: service_started
+      redis:
+        condition: service_started
