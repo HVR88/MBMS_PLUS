@@ -47,7 +47,7 @@ cp example.env .env
 - **`MUSICBRAINZ_REPLICATION_TOKEN` (required for replication)**
 - `MUSICBRAINZ_WEB_SERVER_HOST` ('localhost' default, edit as needed)
 - `MUSICBRAINZ_WEB_SERVER_PORT` ('5000' default, edit as needed)
-- Optional provider keys/tokens for LM-Bridge (Cover Art Archive/Fanart/Last.FM)
+- Optional provider keys/tokens for LM Bridge (TheAudioDB, Fanart, Last.FM, etc.)
 
 Only `.env` is user-maintained. The stack refreshes managed files (admin scripts,
 compose template, and defaults) automatically when you update.
@@ -92,6 +92,30 @@ docker compose up -d
 
 If a release updates `docker-compose.yml`, run `docker compose up -d` again
 after the first restart so the new compose file is applied.
+
+## LM Bridge Plugin for Lidarr
+
+To use LM Bridge, Lidarr has to have the LM Bridge plugin installed. The plugin sets the API's IP:PORT in Lidarr and allows you to configure media filtering
+
+**Installing the Plugin**
+
+1. In Lidarr, open **System → Plugins**
+2. Paste `https://github.com/HVR88/LM-Bridge` into the GitHub URL box and click **Install**.
+3. Restart Lidarr when prompted.
+
+If you don't see a _System → Plugins_ page in your Lidarr, switch to the `nightly` branch, such as **[LinuxServer.io's](https://hub.docker.com/r/linuxserver/lidarr)**
+
+**Enable the Plugin**
+
+1. In Lidarr, open **Settings → Metadata**
+2. Click the **LM Bridge Settings** card
+3. Make sure the Enable check-box is checked in the plugin window
+4. Enter the URL of the LM Bridge container **http://<your_LM_BRIDGE_IP>:5001**
+5. Click Save
+
+Verify a successful LM Bridge installation and check versions by opening the LM Bridge URL in your browser: **http://<your_LM_BRIDGE_IP>:5001**
+
+Lidarr is now using the Bridge API and you should see lightning-fast queries to your MusicBrainz mirror.
 
 ## Notes
 
