@@ -2,13 +2,13 @@
   <img src="https://raw.githubusercontent.com/HVR88/LM-Bridge-DEV/main/assets/lmbridge-icon.png" alt="LM Bridge" width="500" />
 </p>
 
-# <p align="center">**_MusicBrainz Mirror Server PLUS_**<br><sub>**Full stack with Lidarr API Bridge**</sub></p>
+# <p align="center">**_MusicBrainz Mirror Server PLUS_**<br><sub>**Full stack with LM Bridge for Lidarr**</sub></p>
 
 ## Introduction
 
 > [!TIP]
 >
-> When deploying from a terminal, use screen or tmux so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
+> When deploying from a terminal, use _screen_ or _tmux_ so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
 
 ## Requirements
 
