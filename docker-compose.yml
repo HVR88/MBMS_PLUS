@@ -314,7 +314,7 @@ services:
       - ./.mbms/assets/MBMS_TAG_VERSION:/mbms/VERSION:ro
       - ./admin:/admin:ro
     environment:
-      LMBRIDGE_REPLICATION_SCRIPT: /admin/replicate-now-bg.sh
+      LMBRIDGE_REPLICATION_SCRIPT: /admin/replicate-now-bg
       TZ: ${TZ:-America/Toronto}
       # --- General ---
       DEBUG: "${DEBUG:-false}"
