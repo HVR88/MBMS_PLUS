@@ -312,7 +312,9 @@ services:
     volumes:
       - lmbridge_init_state:/metadata/init-state
       - ./.mbms/assets/MBMS_TAG_VERSION:/mbms/VERSION:ro
+      - ./admin:/admin:ro
     environment:
+      LMBRIDGE_REPLICATION_SCRIPT: /admin/replicate-now-bg.sh
       TZ: ${TZ:-America/Toronto}
       # --- General ---
       DEBUG: "${DEBUG:-false}"

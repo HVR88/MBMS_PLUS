@@ -8,7 +8,7 @@
 
 MBMB PLUS is a full stack MusicBrainz mirror server with LM Bridge, an API data bridge for Lidarr. LM Bridge packages the Lidarr Metadata API, and bridges queries to MusicBrainz database, allowing 100% local access to all metadata. That means no more issues with Lidarr database schemas, pre-caching or other nonsense. Just FAST LAN-based performance.
 
-LM Bridge uses a Lidarr plugin for configuration, additionally allolwing filtering and manipulating media format data for all releases. Maybe you don't want vinyl variations showing up in releases? No problem, filter that out. Maybe you want large media lists to be pruned to focus only on the top candidates - that's easy too.
+LM Bridge uses a Lidarr plugin for configuration, supporting filtering and manipulating media format data for all releases. Maybe you don't want vinyl variations showing up in releases? No problem, filter that out. Maybe you want large media lists to be pruned to focus only on the top candidates - that's easy too.
 
 > [!TIP]
 >
