@@ -313,6 +313,8 @@ services:
       - lmbridge_init_state:/metadata/init-state
       - ./.mbms/assets/MBMS_TAG_VERSION:/mbms/VERSION:ro
       - ./admin:/admin:ro
+    env_file:
+      - .env
     environment:
       LMBRIDGE_REPLICATION_SCRIPT: /admin/replicate-now
       TZ: ${TZ:-America/Toronto}
