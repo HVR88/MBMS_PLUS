@@ -216,6 +216,13 @@ services:
       - MUSICBRAINZ_REPLICATION_TIME=${MUSICBRAINZ_REPLICATION_TIME:-03:00}
       - MUSICBRAINZ_REPLICATION_SCHEDULE=${MUSICBRAINZ_REPLICATION_SCHEDULE:-}
       - MUSICBRAINZ_REPLICATION_TOKEN=${MUSICBRAINZ_REPLICATION_TOKEN:-}
+      - MBMS_ADMIN_ENABLED=${MBMS_ADMIN_ENABLED:-0}
+      - MBMS_ADMIN_KEY=${MBMS_ADMIN_KEY:-}
+      - MBMS_ADMIN_HOST=${MBMS_ADMIN_HOST:-0.0.0.0}
+      - MBMS_ADMIN_PORT=${MBMS_ADMIN_PORT:-8099}
+      - MBMS_ADMIN_HEADER=${MBMS_ADMIN_HEADER:-X-MBMS-Key}
+      - MBMS_ADMIN_LOCK=${MBMS_ADMIN_LOCK:-/tmp/replication.pid}
+      - MBMS_ADMIN_REPL_SCRIPT=${MBMS_ADMIN_REPL_SCRIPT:-/usr/local/bin/replication.sh}
       - MUSICBRAINZ_USE_PROXY=1
       - MUSICBRAINZ_WEB_SERVER_HOST=${MUSICBRAINZ_WEB_SERVER_HOST:-localhost}
       - MUSICBRAINZ_WEB_SERVER_PORT=${MUSICBRAINZ_WEB_SERVER_PORT:-5000}
@@ -312,11 +319,9 @@ services:
     volumes:
       - lmbridge_init_state:/metadata/init-state
       - ./.mbms/assets/MBMS_TAG_VERSION:/mbms/VERSION:ro
-      - ./admin:/admin:ro
     env_file:
       - .env
     environment:
-      LMBRIDGE_REPLICATION_SCRIPT: /admin/replicate-now
       TZ: ${TZ:-America/Toronto}
       # --- General ---
       DEBUG: "${DEBUG:-false}"
