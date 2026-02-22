@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=deploy-assets/admin/_common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
+
+dc logs -f --timestamps "$@"

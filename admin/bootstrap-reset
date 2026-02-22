@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=deploy-assets/admin/_common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
+
+force=0
+if [ "${1:-}" = "--yes" ]; then
+  force=1
+  shift
+fi
+
+if [ "$force" -ne 1 ]; then
+  if [ ! -t 0 ]; then
+    echo >&2 "Refusing to run without a TTY. Re-run with --yes to bypass the prompt."
+    exit 1
+  fi
+
+  cat <<'WARN'
+WARNING: This will remove bootstrap marker files for the database and search indexes.
+On next startup, a full bootstrap will run again. This can take hours and
+re-download large data sets.
+WARN
+
+  read -r -p "Type RESET to continue: " confirm
+  if [ "$confirm" != "RESET" ]; then
+    echo "Aborted."
+    exit 1
+  fi
+fi
+
+dc run --rm -T -e MUSICBRAINZ_BOOTSTRAP_CLEAN_MARKERS=1 bootstrap
+
+dc run --rm -T -e MUSICBRAINZ_BOOTSTRAP_CLEAN_MARKERS=1 search-bootstrap
+
+echo "OK: bootstrap markers cleared."
