@@ -6,7 +6,7 @@
 
 ## Introduction
 
-MBMB PLUS is a full stack MusicBrainz mirror server with Limbo, an API data bridge for Lidarr. Limbo packages the Lidarr Metadata API, and bridges queries to MusicBrainz database, allowing 100% local access to all metadata. That means no more issues with Lidarr database schemas, pre-caching or other nonsense. Just FAST LAN-based performance.
+MBMB PLUS is a fully automated, and complete stack, MusicBrainz mirror server with Limbo, an data bridge for Lidarr. Limbo packages the Lidarr Metadata API, and bridges queries to MusicBrainz database, allowing 100% local access to all metadata. That means no more issues with Lidarr database schemas, pre-caching or other nonsense. Just FAST LAN-based performance.
 
 Limbo features its own WebUI, supporting filtering and manipulating media format data for all releases. Maybe you don't want vinyl variations showing up in releases? No problem, filter that out. Maybe you want large media lists to be pruned to focus only on the top candidates - that's easy too.
 

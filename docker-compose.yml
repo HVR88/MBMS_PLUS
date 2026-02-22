@@ -298,8 +298,8 @@ services:
       MB_DB_PASSWORD: ${MB_DB_PASSWORD:-musicbrainz}
       MB_DB_NAME: ${MB_DB_NAME:-musicbrainz_db}
       LIMBO_CACHE_DB: ${LIMBO_CACHE_DB:-lm_cache_db}
-      LIMBO_CACHE_USER: ${LIMBO_CACHE_USER:-lidarr}
-      LIMBO_CACHE_PASSWORD: ${LIMBO_CACHE_PASSWORD:-lidarr}
+      LIMBO_CACHE_USER: ${LIMBO_CACHE_USER:-limbo}
+      LIMBO_CACHE_PASSWORD: ${LIMBO_CACHE_PASSWORD:-limbo}
     restart: "no"
     depends_on:
       <<: *assets_depends
