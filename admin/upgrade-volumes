@@ -17,6 +17,7 @@ Recommended: stop the stack before running.
 EOH
 )
 
+echo
 echo "Limbo MBMS_PLUS Volume Migration"
 
 DRY_RUN=0
@@ -67,6 +68,61 @@ volume_exists() {
   $DOCKER_CMD volume inspect "$1" >/dev/null 2>&1
 }
 
+declare -A VOLUME_SIZES
+load_volume_sizes() {
+  local df_output
+  if ! df_output=$($DOCKER_CMD system df -v 2>/dev/null); then
+    return 0
+  fi
+  echo "$df_output" | awk '
+    $1=="VOLUME" && $2=="NAME" {invol=1; next}
+    invol && NF==0 {exit}
+    invol && NF>=3 {print $1, $3}
+  ' | while read -r name size; do
+    VOLUME_SIZES["$name"]="$size"
+  done
+}
+
+volume_size() {
+  local name=$1
+  if [[ -n "${VOLUME_SIZES[$name]:-}" ]]; then
+    echo "${VOLUME_SIZES[$name]}"
+  else
+    echo "unknown"
+  fi
+}
+
+size_to_bytes() {
+  local s=$1
+  local num unit
+  num=${s%[A-Za-z]*}
+  unit=${s##$num}
+  case "$unit" in
+    B|"") echo "$num" ;;
+    kB) awk -v n="$num" 'BEGIN{printf "%.0f", n*1000}' ;;
+    KB) awk -v n="$num" 'BEGIN{printf "%.0f", n*1000}' ;;
+    MB) awk -v n="$num" 'BEGIN{printf "%.0f", n*1000*1000}' ;;
+    GB) awk -v n="$num" 'BEGIN{printf "%.0f", n*1000*1000*1000}' ;;
+    TB) awk -v n="$num" 'BEGIN{printf "%.0f", n*1000*1000*1000*1000}' ;;
+    *) echo "" ;;
+  esac
+}
+
+bytes_to_human() {
+  local b=$1
+  if [ -z "$b" ]; then
+    echo "unknown"
+    return
+  fi
+  awk -v b="$b" 'BEGIN{
+    if (b>=1e12) printf "%.2f TB", b/1e12;
+    else if (b>=1e9) printf "%.2f GB", b/1e9;
+    else if (b>=1e6) printf "%.2f MB", b/1e6;
+    else if (b>=1e3) printf "%.2f kB", b/1e3;
+    else printf "%d B", b;
+  }'
+}
+
 create_volume() {
   local name=$1
   if volume_exists "$name"; then
@@ -92,7 +148,7 @@ copy_volume() {
     if [[ $DRY_RUN -eq 1 ]]; then
       echo "DRY-RUN: $DOCKER_CMD volume rm $dst"
     else
-      echo "Removing existing target volume: $dst"
+      echo "Replacing existing target volume: $dst"
       $DOCKER_CMD volume rm "$dst" >/dev/null
     fi
   fi
@@ -114,7 +170,12 @@ copy_volume() {
 echo
 echo "Scanning for volumes to migrate..."
 
+load_volume_sizes
+
 FOUND=()
+FOUND_SOURCES=()
+TARGETS_TO_REPLACE=()
+TOTAL_BYTES=""
 for pair in "mbms_plus_pgdata:limbo_pgdata" \
             "mbms_plus_mqdata:limbo_mqdata" \
             "mbms_plus_dbdump:limbo_dbdump" \
@@ -123,7 +184,15 @@ for pair in "mbms_plus_pgdata:limbo_pgdata" \
   src=${pair%%:*}
   dst=${pair##*:}
   if volume_exists "$src"; then
-    FOUND+=("$src -> $dst")
+    FOUND+=("$src ($(volume_size "$src")) -> $dst")
+    size_b=$(size_to_bytes "$(volume_size "$src")")
+    if [ -n "$size_b" ]; then
+      if [ -z "$TOTAL_BYTES" ]; then TOTAL_BYTES=0; fi
+      TOTAL_BYTES=$(awk -v a="$TOTAL_BYTES" -v b="$size_b" 'BEGIN{printf "%.0f", a+b}')
+    fi
+    if volume_exists "$dst"; then
+      TARGETS_TO_REPLACE+=("$dst")
+    fi
   fi
 done
 
@@ -135,7 +204,15 @@ INIT_SOURCES=(
 INIT_TARGET="limbo_bridge_init_state"
 for src in "${INIT_SOURCES[@]}"; do
   if volume_exists "$src"; then
-    FOUND+=("$src -> $INIT_TARGET")
+    FOUND+=("$src ($(volume_size "$src")) -> $INIT_TARGET")
+    size_b=$(size_to_bytes "$(volume_size "$src")")
+    if [ -n "$size_b" ]; then
+      if [ -z "$TOTAL_BYTES" ]; then TOTAL_BYTES=0; fi
+      TOTAL_BYTES=$(awk -v a="$TOTAL_BYTES" -v b="$size_b" 'BEGIN{printf "%.0f", a+b}')
+    fi
+    if volume_exists "$INIT_TARGET"; then
+      TARGETS_TO_REPLACE+=("$INIT_TARGET")
+    fi
   fi
 done
 
@@ -144,7 +221,18 @@ if [ ${#FOUND[@]} -eq 0 ]; then
   exit 0
 fi
 
+if [ -n "$TOTAL_BYTES" ]; then
+  echo "Approx total size: $(bytes_to_human "$TOTAL_BYTES")"
+fi
+echo
 printf '%s\n' "Volumes to migrate:" "${FOUND[@]}"
+
+if [ ${#TARGETS_TO_REPLACE[@]} -gt 0 ]; then
+  echo
+  echo "Existing target volumes will be replaced:"
+  printf '%s\n' "${TARGETS_TO_REPLACE[@]}"
+  echo "These will be removed before copying."
+fi
 
 echo
 echo "Note: This can take from a few minutes to several hours depending on"
