@@ -154,11 +154,10 @@ You have two options for migration:
      (image names changed to `limbo-*`), then re-apply your `.env` values.
 
    - The migration script is included in the `admin/` folder
-     ````
      Then run:
      ```bash
      admin/upgrade-volumes
-     ````
+     ```
    - Then start the stack:
      ```bash
      docker compose up -d
