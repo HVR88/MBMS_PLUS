@@ -118,17 +118,15 @@ If you were using zip downloads, replace your `docker-compose.yml` and
 Example:
 
 ```bash
-mkdir -p /opt/docker/limbo
-cd /opt/docker/limbo
-curl -fsSL -o limbo-latest.zip https://github.com/HVR88/Limbo/releases/latest/download/limbo-1.9.12.zip
+curl -fsSL -o limbo-latest.zip https://github.com/HVR88/Limbo/releases/latest/download/limbo-latest.zip
 unzip -o limbo-latest.zip
 ```
 
-## Migration note (volume prefix and upgrade)
+### Migrating the volume prefix and docker folder name
 
 Older installs did not set `COMPOSE_PROJECT_NAME`. Docker Compose used the
 folder name as the project name, which is why volumes are prefixed `mbms_plus_`.
-If you rename the folder, Compose will look for new volumes unless you pin the
+If you just rename the folder, Compose will look for new volumes unless you pin the
 project name.
 
 First, stop the running containers
@@ -139,29 +137,32 @@ docker compose stop
 
 You have two options for migration:
 
-1. **Keep using existing `mbms_plus_*` parent folder and volumes (no migration)**
-   - Keep the folder name as `mbms_plus`, **or**
-   - Replace `docker-compose.yml` and `example.env` with the new release assets
-     (image names changed to `limbo-*`), then re-apply your `.env` values.
-   - Set `COMPOSE_PROJECT_NAME=mbms_plus` in `.env`
+**Keep using existing `mbms_plus_*` parent folder and volumes (easy)**
 
-2. **Migrate to new `limbo_*` volumes (recommended for new layout)**
-   - Rename the docker folder to `limbo`:
-     ```bash
-     mv MBMS_PLUS limbo
-     ```
-   - Replace `docker-compose.yml` and `example.env` with the new release assets
-     (image names changed to `limbo-*`), then re-apply your `.env` values.
+- Keep the folder name as `mbms_plus`, **or**
+- Replace `docker-compose.yml` and `example.env` with the new release assets
+  (image names changed to `limbo-*`), then re-apply your `.env` values.
+- Set `COMPOSE_PROJECT_NAME=mbms_plus` in `.env`
 
-   - The migration script is included in the `admin/` folder
-     Then run:
-     ```bash
-     admin/upgrade-volumes
-     ```
-   - Then start the stack:
-     ```bash
-     docker compose up -d
-     ```
+### - _OR_ -
+
+**Migrate to new `limbo_*` volumes (recommended for new layout)**
+
+- Rename the docker folder to `limbo`:
+  ```bash
+  mv MBMS_PLUS limbo
+  ```
+- Replace `docker-compose.yml` and `example.env` with the new release assets
+  (image names changed to `limbo-*`), then re-apply your `.env` values.
+
+- The migration script is included in the `admin/` folder as part of the zip or pull:
+  ```bash
+  admin/upgrade-volumes
+  ```
+- Then start the stack:
+  ```bash
+  docker compose up -d
+  ```
 
 The migration script copies data from `mbms_plus_*` to `limbo_*` volumes and
 merges any old Limbo init-state volumes into the single pinned
