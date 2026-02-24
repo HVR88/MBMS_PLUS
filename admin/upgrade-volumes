@@ -1,0 +1,104 @@
+#!/bin/bash
+
+set -e -o pipefail -u
+
+# shellcheck source=admin/lib/common.inc.bash
+source "$(dirname "${BASH_SOURCE[0]}")/lib/common.inc.bash"
+
+HELP=$(cat <<'EOH'
+Usage: upgrade-volumes [--dry-run]
+
+Migrate legacy mbms_plus_* volumes to limbo_* volumes.
+- Creates target volumes if missing.
+- Copies data (source -> target) and leaves sources intact.
+- For Limbo init-state volumes, merges multiple legacy names into
+  a single target volume; last one copied wins on conflicts.
+
+Recommended: stop the stack before running.
+EOH
+)
+
+DRY_RUN=0
+if [[ $# -gt 0 ]]; then
+  case "$1" in
+    -h|--help)
+      echo "$HELP"
+      exit 0
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      ;;
+    *)
+      echo >&2 "$SCRIPT_NAME: unrecognized argument: $1"
+      echo >&2 "Try '$SCRIPT_NAME --help' for usage."
+      exit 64
+      ;;
+  esac
+fi
+
+volume_exists() {
+  $DOCKER_CMD volume inspect "$1" >/dev/null 2>&1
+}
+
+create_volume() {
+  local name=$1
+  if volume_exists "$name"; then
+    return 0
+  fi
+  if [[ $DRY_RUN -eq 1 ]]; then
+    echo "DRY-RUN: $DOCKER_CMD volume create $name"
+  else
+    $DOCKER_CMD volume create "$name" >/dev/null
+  fi
+}
+
+copy_volume() {
+  local src=$1
+  local dst=$2
+
+  if ! volume_exists "$src"; then
+    echo "Skip: source volume not found: $src"
+    return 0
+  fi
+
+  create_volume "$dst"
+
+  if [[ $DRY_RUN -eq 1 ]]; then
+    echo "DRY-RUN: copy $src -> $dst"
+    return 0
+  fi
+
+  $DOCKER_CMD run --rm \
+    -v "$src":/from \
+    -v "$dst":/to \
+    alpine sh -c "cd /from && tar -cf - . | tar -xpf - -C /to"
+}
+
+# Standard mbms_plus_* volumes -> limbo_*
+PAIRS=(
+  "mbms_plus_pgdata:limbo_pgdata"
+  "mbms_plus_mqdata:limbo_mqdata"
+  "mbms_plus_dbdump:limbo_dbdump"
+  "mbms_plus_solrdata:limbo_solrdata"
+  "mbms_plus_solrdump:limbo_solrdump"
+)
+
+for pair in "${PAIRS[@]}"; do
+  src=${pair%%:*}
+  dst=${pair##*:}
+  copy_volume "$src" "$dst"
+done
+
+# Merge legacy Limbo init-state volumes into a single fixed target.
+INIT_TARGET="limbo_bridge_init_state"
+INIT_SOURCES=(
+  "mbms_plus_limbo_init_state"
+  "mbms_plus_lmbridge-init-state"
+  "mbms_plus_lmbridge_init_state"
+)
+
+for src in "${INIT_SOURCES[@]}"; do
+  copy_volume "$src" "$INIT_TARGET"
+done
+
+echo "Done."
