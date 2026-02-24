@@ -24,7 +24,6 @@ volumes:
 
 services:
   assets:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-assets:latest
     pull_policy: always
     volumes:
@@ -48,7 +47,6 @@ services:
       <<: *assets_depends
 
   db:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-db:latest
     logging:
       driver: "json-file"
@@ -70,7 +68,6 @@ services:
       <<: *assets_depends
 
   mq:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-mq:latest
     hostname: "mq"
     logging:
@@ -91,7 +88,6 @@ services:
       <<: *assets_depends
 
   redis:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: redis:3-alpine
     logging:
       driver: "json-file"
@@ -107,7 +103,6 @@ services:
       <<: *assets_depends
 
   bootstrap:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-bootstrap:latest
     environment:
       - TZ=${TZ:-America/Toronto}
@@ -132,7 +127,6 @@ services:
         condition: service_started
 
   search-bootstrap:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:latest
     entrypoint: ["/usr/local/bin/bootstrap-indexes.sh"]
     environment:
@@ -158,7 +152,6 @@ services:
         condition: service_completed_successfully
 
   search:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:latest
     logging:
       driver: "json-file"
@@ -185,7 +178,6 @@ services:
         condition: service_completed_successfully
 
   musicbrainz:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-musicbrainz:latest
     logging:
       driver: "json-file"
@@ -243,7 +235,6 @@ services:
         condition: service_completed_successfully
 
   indexer:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:latest
     environment:
       - TZ=${TZ:-America/Toronto}
@@ -264,7 +255,6 @@ services:
         condition: service_started
 
   indexer-cron:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:latest
     environment:
       - TZ=${TZ:-America/Toronto}
@@ -287,7 +277,6 @@ services:
         condition: service_started
 
   limbo-init:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:latest}
     pull_policy: always
     entrypoint: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
@@ -310,7 +299,6 @@ services:
         condition: service_completed_successfully
 
   limbo:
-    profiles: ["${COMPOSE_PROFILES:-mbms}"]
     image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:latest}
     pull_policy: always
     ports:

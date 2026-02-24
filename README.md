@@ -168,6 +168,12 @@ The migration script copies data from `mbms_plus_*` to `limbo_*` volumes and
 merges any old Limbo init-state volumes into the single pinned
 `limbo_bridge_init_state` volume.
 
+Once you've verified everything works as expected using the new volumes, the old ones can be removed:
+
+```bash
+admin/upgrade-volumes --cleanup
+```
+
 ## Limbo Configuration
 
 **WORK IN PROGRESS - REWORKING WITHOUT A PLUGIN**
