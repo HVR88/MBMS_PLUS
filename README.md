@@ -6,7 +6,7 @@
 
 ## Introduction
 
-MBMB PLUS is a fully automated, and complete stack, MusicBrainz mirror server with Limbo, an data bridge for Lidarr. Limbo packages the Lidarr Metadata API, and bridges queries to MusicBrainz database, allowing 100% local access to all metadata. That means no more issues with Lidarr database schemas, pre-caching or other nonsense. Just FAST LAN-based performance.
+Limbo is a set of tools and data bridge for Lidarr, with a full-stack and automated MusicBrainz mirror server installation. Limbo packages the Lidarr Metadata API, and bridges queries to MusicBrainz database, allowing 100% local access to all metadata. That means no more issues with Lidarr database schemas, pre-caching or other nonsense. Just FAST LAN-based performance.
 
 Limbo features its own WebUI, supporting filtering and manipulating media format data for all releases. Maybe you don't want vinyl variations showing up in releases? No problem, filter that out. Maybe you want large media lists to be pruned to focus only on the top candidates - that's easy too.
 
@@ -99,6 +99,15 @@ docker compose up -d
 
 If a release updates `docker-compose.yml`, run `docker compose up -d` again
 after the first restart so the new compose file is applied.
+
+## Migration note (repo rename)
+
+If you previously cloned the old deploy repo, update your git remote once:
+
+1. `git remote set-url origin https://github.com/HVR88/Limbo`
+2. `git pull`
+
+If you were using zip downloads, get future updates from the new repo/releases.
 
 ## Limbo Configuration
 
