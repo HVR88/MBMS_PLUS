@@ -18,7 +18,8 @@ volumes:
     driver: local
   solrdump:
     driver: local
-  limbo_init_state:
+  limbo_bridge_init_state:
+    name: limbo_bridge_init_state
     driver: local
 
 services:
@@ -315,7 +316,7 @@ services:
     ports:
       - "${LIMBO_PORT:-5001}:5001"
     volumes:
-      - limbo_init_state:/metadata/init-state
+      - limbo_bridge_init_state:/metadata/init-state
       - ./.mbms/assets/MBMS_TAG_VERSION:/mbms/VERSION:ro
     env_file:
       - .env
