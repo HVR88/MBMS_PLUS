@@ -24,7 +24,7 @@ volumes:
 services:
   assets:
     profiles: ["${COMPOSE_PROFILES:-mbms}"]
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-assets:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-assets:latest
     pull_policy: always
     volumes:
       - ./:/out
@@ -48,7 +48,7 @@ services:
 
   db:
     profiles: ["${COMPOSE_PROFILES:-mbms}"]
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-db:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-db:latest
     logging:
       driver: "json-file"
       options:
@@ -70,7 +70,7 @@ services:
 
   mq:
     profiles: ["${COMPOSE_PROFILES:-mbms}"]
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-mq:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-mq:latest
     hostname: "mq"
     logging:
       driver: "json-file"
@@ -107,7 +107,7 @@ services:
 
   bootstrap:
     profiles: ["${COMPOSE_PROFILES:-mbms}"]
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-bootstrap:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-bootstrap:latest
     environment:
       - TZ=${TZ:-America/Toronto}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -132,7 +132,7 @@ services:
 
   search-bootstrap:
     profiles: ["${COMPOSE_PROFILES:-mbms}"]
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-search:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:latest
     entrypoint: ["/usr/local/bin/bootstrap-indexes.sh"]
     environment:
       - TZ=${TZ:-America/Toronto}
@@ -158,7 +158,7 @@ services:
 
   search:
     profiles: ["${COMPOSE_PROFILES:-mbms}"]
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-search:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:latest
     logging:
       driver: "json-file"
       options:
@@ -185,7 +185,7 @@ services:
 
   musicbrainz:
     profiles: ["${COMPOSE_PROFILES:-mbms}"]
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-musicbrainz:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-musicbrainz:latest
     logging:
       driver: "json-file"
       options:
@@ -243,7 +243,7 @@ services:
 
   indexer:
     profiles: ["${COMPOSE_PROFILES:-mbms}"]
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-indexer:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:latest
     environment:
       - TZ=${TZ:-America/Toronto}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -264,7 +264,7 @@ services:
 
   indexer-cron:
     profiles: ["${COMPOSE_PROFILES:-mbms}"]
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-mbms-plus}-indexer:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:latest
     environment:
       - TZ=${TZ:-America/Toronto}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
