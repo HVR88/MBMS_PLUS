@@ -118,8 +118,6 @@ If you were using zip downloads, replace your `docker-compose.yml` and
 Example:
 
 ```bash
-mkdir -p /opt/docker/limbo
-cd /opt/docker/limbo
 curl -fsSL -o limbo-latest.zip https://github.com/HVR88/Limbo/releases/latest/download/limbo-1.9.12.zip
 unzip -o limbo-latest.zip
 ```
