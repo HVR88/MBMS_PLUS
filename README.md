@@ -156,10 +156,14 @@ You have two options for migration:
   (image names changed to `limbo-*`), then re-apply your `.env` values.
 
 - The migration script is included in the `admin/` folder as part of the zip or pull:
+
   ```bash
   admin/upgrade-volumes
   ```
-- Then start the stack:
+
+  The name and size of each volume is displayed and you'll be prompted for confirmation before the migration starts
+
+- Once that's finished, start the stack:
   ```bash
   docker compose up -d
   ```
@@ -168,7 +172,7 @@ The migration script copies data from `mbms_plus_*` to `limbo_*` volumes and
 merges any old Limbo init-state volumes into the single pinned
 `limbo_bridge_init_state` volume.
 
-Once you've verified everything works as expected using the new volumes, the old ones can be removed:
+Once you've verified everything works using the new volumes, the old ones can be removed:
 
 ```bash
 admin/upgrade-volumes --cleanup

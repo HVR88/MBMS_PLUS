@@ -104,6 +104,10 @@ load_volume_sizes() {
 
 volume_size() {
   local name=$1
+  if [ -d "/var/lib/docker/volumes/${name}" ]; then
+    du -sh "/var/lib/docker/volumes/${name}" 2>/dev/null | awk '{print $1}'
+    return
+  fi
   if [[ -n "${VOLUME_SIZES[$name]:-}" ]]; then
     echo "${VOLUME_SIZES[$name]}"
   else
