@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/HVR88/Limbo_DEV/main/assets/limbo-icon.png" alt="Limbo" width="400" />
 </p>
 
-# <p align="center">**_MusicBrainz Mirror Server PLUS_**<br><sub>**Full stack with Limbo for Lidarr**</sub></p>
+# <p align="center">**_Limbo for Lidarr_**<br><sub>**Tools WebUI & Full Stack MusicBrainz Server**</sub></p>
 
 ## Introduction
 
@@ -80,13 +80,13 @@ docker compose logs -f --no-log-prefix --tail=200 \
 
 ## Browser access / status
 
-When finished, your MusicBrainz mirror will be available at **http://HOST_IP:5000**
+When finished, the Limbo settings are available at **http://HOST_IP:5001**
 
-Visit **http://HOST_IP:5001** to check the status of LM&nbsp;Bridge and Limbo, including versions, schedules and filter settings
+And the standard MusicBrainz webUI at **http://HOST_IP:5000**
 
 > [!TIP]
 >
-> Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own (sub)domain to reach your MusicBrainz mirror on port 80 (HTTP) or 443 (HTTPS) on your LAN
+> Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own (sub)domains to reach your Limbo and MusicBrainz LOCALLY on port 80 (HTTP) or 443 (HTTPS) (requries two host names, like limbo.yourdomain.net and mbrainz.yourdomain.net)
 
 ## Updates
 
@@ -100,14 +100,14 @@ docker compose up -d
 If a release updates `docker-compose.yml`, run `docker compose up -d` again
 after the first restart so the new compose file is applied.
 
-## Migration note (repo rename)
+## Migration note (Anyone using the OLD MBMB_PLUS install)
 
-If you previously cloned the old deploy repo, update your git remote once:
+If you previously cloned the old repo, update your git remote once:
 
 1. `git remote set-url origin https://github.com/HVR88/Limbo`
 2. `git pull`
 
-If you were using zip downloads, get future updates from the new repo/releases.
+If you were using zip downloads, get update your .env and compose file from the new repo release: https://github.com/HVR88/Limbo`
 
 ## Limbo Configuration
 
