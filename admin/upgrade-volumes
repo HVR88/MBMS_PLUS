@@ -261,9 +261,10 @@ if [ ${#TARGETS_TO_REPLACE[@]} -gt 0 ]; then
 fi
 
 echo
-echo "Note: This can take from a few minutes to several hours depending on"
-echo "volume size. You will need free disk space roughly equal to the total"
-echo "size of the volumes being copied."
+echo "Note: This can take from a few minutes to hours depending on volume size."
+echo "Expect around 40 minutes on nvme/ssd."
+echo "You'll need a little bit more free disk space than the total size of the"
+echo "volumes being copied."
 echo "Do NOT stop the process once it starts. If you must stop it, re-run this"
 echo "script and it will replace any partially copied target volumes."
 echo
