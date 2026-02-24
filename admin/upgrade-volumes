@@ -2,8 +2,7 @@
 
 set -e -o pipefail -u
 
-# shellcheck source=admin/lib/common.inc.bash
-source "$(dirname "${BASH_SOURCE[0]}")/lib/common.inc.bash"
+SCRIPT_NAME=$(basename "$0")
 
 HELP=$(cat <<'EOH'
 Usage: upgrade-volumes [--dry-run]
@@ -35,6 +34,8 @@ if [[ $# -gt 0 ]]; then
       ;;
   esac
 fi
+
+DOCKER_CMD=${DOCKER_CMD:-docker}
 
 volume_exists() {
   $DOCKER_CMD volume inspect "$1" >/dev/null 2>&1
