@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/HVR88/Limbo-DEV/main/assets/limbo-icon.png" alt="Limbo" width="400" />
+  <img src="https://raw.githubusercontent.com/HVR88/Limbo_DEV/main/assets/limbo-icon.png" alt="Limbo" width="400" />
 </p>
 
 # <p align="center">**_MusicBrainz Mirror Server PLUS_**<br><sub>**Full stack with Limbo for Lidarr**</sub></p>
@@ -29,14 +29,14 @@ Limbo features its own WebUI, supporting filtering and manipulating media format
 - Create an account at https://MusicBrainz.com
 - Get your _Live Data Feed Access Token_ from Metabrainz https://metabrainz.org/profile
 
-### 2. Download the MBMS_PLUS compose files (no git required)
+### 2. Download the Limbo compose files (no git required)
 
 Create a folder and download the latest `docker-compose.yml` and `example.env`
-from the MBMS_PLUS release assets (or the raw files in this repo).
+from the Limbo release assets (or the raw files in this repo).
 
 ```
-mkdir -p /opt/docker/mbms-plus
-cd /opt/docker/mbms-plus
+mkdir -p /opt/docker/limbo
+cd /opt/docker/limbo
 ```
 
 ### 3. Copy and configure env file
@@ -82,7 +82,7 @@ docker compose logs -f --no-log-prefix --tail=200 \
 
 When finished, your MusicBrainz mirror will be available at **http://HOST_IP:5000**
 
-Visit **http://HOST_IP:5001** to check the status of LM&nbsp;Bridge and MBMS PLUS, including versions, schedules and filter settings
+Visit **http://HOST_IP:5001** to check the status of LM&nbsp;Bridge and Limbo, including versions, schedules and filter settings
 
 > [!TIP]
 >
@@ -119,11 +119,11 @@ Lidarr is now using the Bridge API and you should see lightning-fast queries to 
 
 > [!NOTE]
 >
-> MBMS PLUS is for personal use only: **NO COMMERCIAL OR BUSINESS USE IS PERMITTED**
+> Limbo is for personal use only: **NO COMMERCIAL OR BUSINESS USE IS PERMITTED**
 
 ### Source code, licenses and development repo:
 
-https://github.com/HVR88/musicbrainz_stack-DEV
+https://github.com/HVR88/Limbo-MusicBrainz_DEV
 
 ## Maintenance (optional)
 
