@@ -100,14 +100,46 @@ docker compose up -d
 If a release updates `docker-compose.yml`, run `docker compose up -d` again
 after the first restart so the new compose file is applied.
 
-## Migration note (Anyone using the OLD MBMB_PLUS install)
+## Migration note (old MBMB_PLUS installs)
 
 If you previously cloned the old repo, update your git remote once:
 
 1. `git remote set-url origin https://github.com/HVR88/Limbo`
 2. `git pull`
 
-If you were using zip downloads, get update your .env and compose file from the new repo release: https://github.com/HVR88/Limbo`
+If you were using zip downloads, replace your `docker-compose.yml` and
+`example.env` with the new release assets, then re-apply your `.env` settings.
+
+## Migration note (volume prefix and upgrade)
+
+Older installs did not set `COMPOSE_PROJECT_NAME`. Docker Compose used the
+folder name as the project name, which is why volumes are prefixed `mbms_plus_`.
+If you rename the folder, Compose will look for new volumes unless you pin the
+project name.
+
+You have two options:
+
+1. **Keep using existing `mbms_plus_*` volumes (no migration)**
+   - Keep the folder name as `mbms_plus`, **or**
+   - Replace `docker-compose.yml` and `example.env` with the new release assets
+     (image names changed to `limbo-*`), then re-apply your `.env` values
+   - Set `COMPOSE_PROJECT_NAME=mbms_plus` in `.env`
+
+2. **Migrate to new `limbo_*` volumes (recommended for new layout)**
+   - Replace `docker-compose.yml` and `example.env` with the new release assets
+     (image names changed to `limbo-*`), then re-apply your `.env` values
+   - Run the migration script:
+     ```bash
+     admin/upgrade-volumes
+     ```
+   - Then start the stack:
+     ```bash
+     docker compose up -d
+     ```
+
+The migration script copies data from `mbms_plus_*` to `limbo_*` volumes and
+merges any old Limbo init-state volumes into the single pinned
+`limbo_bridge_init_state` volume.
 
 ## Limbo Configuration
 
