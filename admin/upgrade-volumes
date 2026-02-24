@@ -5,7 +5,7 @@ set -e -o pipefail -u
 SCRIPT_NAME=$(basename "$0")
 
 HELP=$(cat <<'EOH'
-Usage: upgrade-volumes [--dry-run]
+Usage: upgrade-volumes [--dry-run] [--cleanup]
 
 Migrate legacy mbms_plus_* volumes to limbo_* volumes.
 - Creates target volumes if missing.
@@ -21,6 +21,7 @@ echo
 echo "Limbo MBMS_PLUS Volume Migration"
 
 DRY_RUN=0
+CLEANUP=0
 if [[ $# -gt 0 ]]; then
   case "$1" in
     -h|--help)
@@ -29,6 +30,9 @@ if [[ $# -gt 0 ]]; then
       ;;
     --dry-run)
       DRY_RUN=1
+      ;;
+    --cleanup)
+      CLEANUP=1
       ;;
     *)
       echo >&2 "$SCRIPT_NAME: unrecognized argument: $1"
@@ -63,6 +67,21 @@ if [ -n "$($DOCKER_CMD ps --format '{{.Names}}' | grep -E '(^|_)mbms_plus|(^|_)l
   echo >&2 "Please stop the stack and re-run this script."
   exit 1
 fi
+
+MARKER_DIR=".mbms-migration"
+mkdir -p "$MARKER_DIR"
+
+MIGRATED_TARGETS=()
+MIGRATED_SOURCES=()
+
+write_marker() {
+  local src=$1
+  local dst=$2
+  local marker="$MARKER_DIR/${dst}.done"
+  local ts
+  ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  echo "${ts} ${src} -> ${dst}" > "$marker"
+}
 
 volume_exists() {
   $DOCKER_CMD volume inspect "$1" >/dev/null 2>&1
@@ -139,6 +158,9 @@ copy_volume() {
   local src=$1
   local dst=$2
 
+  echo
+  echo "Starting copy: $src -> $dst"
+
   if ! volume_exists "$src"; then
     echo "Skip: source volume not found: $src"
     return 0
@@ -164,6 +186,10 @@ copy_volume() {
       -v "$src":/from \
       -v "$dst":/to \
       alpine sh -c "cd /from && tar -cf - . | tar -xpf - -C /to"
+
+  write_marker "$src" "$dst"
+  MIGRATED_TARGETS+=("$dst")
+  MIGRATED_SOURCES+=("$src")
 }
 
 # Report what will be migrated
@@ -294,5 +320,32 @@ INIT_SOURCES=(
 for src in "${INIT_SOURCES[@]}"; do
   copy_volume "$src" "$INIT_TARGET"
 done
+
+echo "$(date -u +"%Y-%m-%dT%H:%M:%SZ") Migration complete" > "$MARKER_DIR/MIGRATION_COMPLETE"
+
+if [[ $CLEANUP -eq 1 ]]; then
+  echo
+  echo "Cleanup requested. Verifying markers before removing source volumes..."
+  missing=0
+  for dst in "${MIGRATED_TARGETS[@]}"; do
+    if [ ! -s "$MARKER_DIR/${dst}.done" ]; then
+      echo "Missing marker: $MARKER_DIR/${dst}.done"
+      missing=1
+    fi
+  done
+  if [ $missing -ne 0 ]; then
+    echo "Cleanup skipped: missing marker(s)."
+  else
+    echo "All markers present. Removing source volumes..."
+    for src in "${MIGRATED_SOURCES[@]}"; do
+      if [[ $DRY_RUN -eq 1 ]]; then
+        echo "DRY-RUN: $DOCKER_CMD volume rm $src"
+      else
+        $DOCKER_CMD volume rm "$src" >/dev/null 2>&1 || true
+      fi
+    done
+    echo "Cleanup complete."
+  fi
+fi
 
 echo "Done."
