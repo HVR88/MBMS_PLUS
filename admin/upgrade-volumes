@@ -17,6 +17,8 @@ Recommended: stop the stack before running.
 EOH
 )
 
+echo "Limbo MBMS_PLUS Volume Migration"
+
 DRY_RUN=0
 if [[ $# -gt 0 ]]; then
   case "$1" in
@@ -36,6 +38,30 @@ if [[ $# -gt 0 ]]; then
 fi
 
 DOCKER_CMD=${DOCKER_CMD:-docker}
+
+if command -v docker >/dev/null 2>&1; then
+  :
+else
+  echo >&2 "$SCRIPT_NAME: docker not found in PATH"
+  exit 127
+fi
+
+COMPOSE_CMD=${DOCKER_COMPOSE_CMD:-${DOCKER_CMD} compose}
+if [ -f docker-compose.yml ]; then
+  if $COMPOSE_CMD ps --status running -q >/dev/null 2>&1; then
+    if [ -n "$($COMPOSE_CMD ps --status running -q)" ]; then
+      echo >&2 "Error: Docker stack appears to be running."
+      echo >&2 "Please stop the stack (docker compose down) and re-run this script."
+      exit 1
+    fi
+  fi
+fi
+
+if [ -n "$($DOCKER_CMD ps --format '{{.Names}}' | grep -E '(^|_)mbms_plus|(^|_)limbo' || true)" ]; then
+  echo >&2 "Error: Detected running containers that look like MBMS/Limbo."
+  echo >&2 "Please stop the stack and re-run this script."
+  exit 1
+fi
 
 volume_exists() {
   $DOCKER_CMD volume inspect "$1" >/dev/null 2>&1
@@ -62,6 +88,14 @@ copy_volume() {
     return 0
   fi
 
+  if volume_exists "$dst"; then
+    if [[ $DRY_RUN -eq 1 ]]; then
+      echo "DRY-RUN: $DOCKER_CMD volume rm $dst"
+    else
+      echo "Removing existing target volume: $dst"
+      $DOCKER_CMD volume rm "$dst" >/dev/null
+    fi
+  fi
   create_volume "$dst"
 
   if [[ $DRY_RUN -eq 1 ]]; then
@@ -69,10 +103,81 @@ copy_volume() {
     return 0
   fi
 
-  $DOCKER_CMD run --rm \
-    -v "$src":/from \
-    -v "$dst":/to \
-    alpine sh -c "cd /from && tar -cf - . | tar -xpf - -C /to"
+  run_with_heartbeat "Copying $src -> $dst" \
+    $DOCKER_CMD run --rm \
+      -v "$src":/from \
+      -v "$dst":/to \
+      alpine sh -c "cd /from && tar -cf - . | tar -xpf - -C /to"
+}
+
+# Report what will be migrated
+echo
+echo "Scanning for volumes to migrate..."
+
+FOUND=()
+for pair in "mbms_plus_pgdata:limbo_pgdata" \
+            "mbms_plus_mqdata:limbo_mqdata" \
+            "mbms_plus_dbdump:limbo_dbdump" \
+            "mbms_plus_solrdata:limbo_solrdata" \
+            "mbms_plus_solrdump:limbo_solrdump"; do
+  src=${pair%%:*}
+  dst=${pair##*:}
+  if volume_exists "$src"; then
+    FOUND+=("$src -> $dst")
+  fi
+done
+
+INIT_SOURCES=(
+  "mbms_plus_limbo_init_state"
+  "mbms_plus_lmbridge-init-state"
+  "mbms_plus_lmbridge_init_state"
+)
+INIT_TARGET="limbo_bridge_init_state"
+for src in "${INIT_SOURCES[@]}"; do
+  if volume_exists "$src"; then
+    FOUND+=("$src -> $INIT_TARGET")
+  fi
+done
+
+if [ ${#FOUND[@]} -eq 0 ]; then
+  echo "No matching mbms_plus_* volumes found. Nothing to migrate."
+  exit 0
+fi
+
+printf '%s\n' "Volumes to migrate:" "${FOUND[@]}"
+
+echo
+echo "Note: This can take from a few minutes to several hours depending on"
+echo "volume size. You will need free disk space roughly equal to the total"
+echo "size of the volumes being copied."
+echo "Do NOT stop the process once it starts. If you must stop it, re-run this"
+echo "script and it will replace any partially copied target volumes."
+echo
+
+if [[ $DRY_RUN -eq 0 ]]; then
+  read -r -p "Continue? [y/N] " confirm
+  case "$confirm" in
+    y|Y|yes|YES) ;;
+    *) echo "Cancelled."; exit 0 ;;
+  esac
+fi
+
+run_with_heartbeat() {
+  local msg=$1
+  shift
+  local hb_pid=
+  (
+    while true; do
+      echo "  [$(date '+%Y-%m-%d %H:%M:%S')] $msg..."
+      sleep 30
+    done
+  ) &
+  hb_pid=$!
+  "$@"
+  local status=$?
+  kill "$hb_pid" >/dev/null 2>&1 || true
+  wait "$hb_pid" >/dev/null 2>&1 || true
+  return $status
 }
 
 # Standard mbms_plus_* volumes -> limbo_*
