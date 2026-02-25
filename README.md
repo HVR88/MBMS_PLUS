@@ -122,12 +122,9 @@ curl -fsSL -o limbo-latest.zip https://github.com/HVR88/Limbo/releases/latest/do
 unzip -o limbo-latest.zip
 ```
 
-### Migrating the volume prefix and docker folder name
+### Migrating project volumes (prefix and docker folder names)
 
-Older installs did not set `COMPOSE_PROJECT_NAME`. Docker Compose used the
-folder name as the project name, which is why volumes are prefixed `mbms_plus_`.
-If you just rename the folder, Compose will look for new volumes unless you pin the
-project name.
+When MBMS*PLUS was originally installed, the folder name was used as the project name, which set up volumes with a `mbms_plus*`prefix. However, since the project update and new name, Compose looks for volumes with the new`limbo\_` prefix and will error out. To fix this, you can do one of the following two options:
 
 First, stop the running containers
 
@@ -135,9 +132,8 @@ First, stop the running containers
 docker compose stop
 ```
 
-You have two options for migration:
-
-**Keep using existing `mbms_plus_*` parent folder and volumes (easy)**
+**Option 1:**
+**Keep using existing `mbms_plus` parent folder and volumes (easy and fast)**
 
 - Keep the folder name as `mbms_plus`, **or**
 - Replace `docker-compose.yml` and `example.env` with the new release assets
@@ -146,33 +142,31 @@ You have two options for migration:
 
 ### - _OR_ -
 
-**Migrate to new `limbo_*` volumes (recommended for new layout)**
+**Option 2:**
+**Migrate to new `limbo` volumes (recommended for new layout)**
 
 - Rename the docker folder to `limbo`:
   ```bash
   mv MBMS_PLUS limbo
   ```
-- Replace `docker-compose.yml` and `example.env` with the new release assets
-  (image names changed to `limbo-*`), then re-apply your `.env` values.
+- Replace `docker-compose.yml` and `example.env` with the new release assets, then re-apply your `.env` values.
 
-- The migration script is included in the `admin/` folder as part of the zip or pull:
+- Run the migration script included in the `admin/` folder as part of the zip or pull:
 
   ```bash
   admin/upgrade-volumes
   ```
 
-  The name and size of each volume is displayed and you'll be prompted for confirmation before the migration starts
+  The name and size of each volume is displayed and you'll be prompted for confirmation before the migration starts.
 
-- Once that's finished, start the stack:
+- Once finished, start the stack:
   ```bash
   docker compose up -d
   ```
 
-The migration script copies data from `mbms_plus_*` to `limbo_*` volumes and
-merges any old Limbo init-state volumes into the single pinned
-`limbo_bridge_init_state` volume.
+The migration script copies data from `mbms_plus_*` to `limbo_*` volumes.
 
-Once you've verified everything works using the new volumes, the old ones can be removed:
+After verifying everything works using the new volumes, the old ones can be removed:
 
 ```bash
 admin/upgrade-volumes --cleanup
@@ -180,11 +174,11 @@ admin/upgrade-volumes --cleanup
 
 ## Limbo Configuration
 
-**WORK IN PROGRESS - REWORKING WITHOUT A PLUGIN**
+**WORK IN PROGRESS**
 
 Verify a successful Limbo installation and check versions by opening the Limbo URL in your browser: **http://<your_LIMBO_IP>:5001**
 
-Lidarr is now using the Bridge API and you should see lightning-fast queries to your MusicBrainz mirror.
+_**Use the SETTINGS button on the top right of the webUI to configure your Lidarr IP address, port and API KEY. The API Key can be found in Lidarr's Settings -> General page.**_
 
 ## Notes
 
