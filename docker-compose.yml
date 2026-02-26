@@ -24,7 +24,7 @@ volumes:
 
 services:
   assets:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-assets:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-assets:${LIMBO_CHANNEL:-latest}
     pull_policy: always
     volumes:
       - ./:/out
@@ -47,7 +47,7 @@ services:
       <<: *assets_depends
 
   db:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-db:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-db:${LIMBO_CHANNEL:-latest}
     logging:
       driver: "json-file"
       options:
@@ -68,7 +68,7 @@ services:
       <<: *assets_depends
 
   mq:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-mq:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-mq:${LIMBO_CHANNEL:-latest}
     hostname: "mq"
     logging:
       driver: "json-file"
@@ -103,7 +103,7 @@ services:
       <<: *assets_depends
 
   bootstrap:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-bootstrap:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-bootstrap:${LIMBO_CHANNEL:-latest}
     environment:
       - TZ=${TZ:-America/Toronto}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -127,7 +127,7 @@ services:
         condition: service_started
 
   search-bootstrap:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
     entrypoint: ["/usr/local/bin/bootstrap-indexes.sh"]
     environment:
       - TZ=${TZ:-America/Toronto}
@@ -152,7 +152,7 @@ services:
         condition: service_completed_successfully
 
   search:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
     logging:
       driver: "json-file"
       options:
@@ -178,7 +178,7 @@ services:
         condition: service_completed_successfully
 
   musicbrainz:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-musicbrainz:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-musicbrainz:${LIMBO_CHANNEL:-latest}
     logging:
       driver: "json-file"
       options:
@@ -235,7 +235,7 @@ services:
         condition: service_completed_successfully
 
   indexer:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:${LIMBO_CHANNEL:-latest}
     environment:
       - TZ=${TZ:-America/Toronto}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -255,7 +255,7 @@ services:
         condition: service_started
 
   indexer-cron:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:latest
+    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:${LIMBO_CHANNEL:-latest}
     environment:
       - TZ=${TZ:-America/Toronto}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -277,7 +277,7 @@ services:
         condition: service_started
 
   limbo-init:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:latest}
+    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
     pull_policy: always
     entrypoint: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
     environment:
@@ -299,7 +299,7 @@ services:
         condition: service_completed_successfully
 
   limbo:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:latest}
+    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
     pull_policy: always
     ports:
       - "${LIMBO_PORT:-5001}:5001"
