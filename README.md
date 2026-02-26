@@ -135,9 +135,7 @@ docker compose stop
 **Option 1:**
 **Keep using existing `mbms_plus` parent folder and volumes (easy and fast)**
 
-- Keep the folder name as `mbms_plus`, **or**
-- Replace `docker-compose.yml` and `example.env` with the new release assets
-  (image names changed to `limbo-*`), then re-apply your `.env` values.
+- Keep the folder name as `mbms_plus`
 - Set `COMPOSE_PROJECT_NAME=mbms_plus` in `.env`
 
 ### - _OR_ -
