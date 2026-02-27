@@ -14,6 +14,10 @@ Limbo features its own WebUI, supporting filtering and manipulating media format
 >
 > When deploying from a terminal, use _screen_ or _tmux_ so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
 
+<p align="center">
+  <img src="https://github.com/HVR88/Docs-Extras/blob/master/Limbo-open-1.9.227.png?raw=true" alt="Limbo" width="600" />
+</p>
+
 ## Requirements
 
 - Linux server / VM / LXC with Docker support
