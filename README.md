@@ -12,7 +12,7 @@ Limbo packages the Lidarr Metadata API and bridges queries to the MusicBrainz da
 
 _You say that you don't want vinyl formats in releases? No problem, filter that out._
 
-From the Limbo WebUI, you can filter/modify media formats for all releases, set up additional data providers (not normally supported by Lidarr) and fix artwork downloading for those it already does.
+From the Limbo WebUI, you can filter/modify media formats for all releases, set up additional data providers (not normally supported by Lidarr) and fix artwork downloading for those it already supports.
 
 Currently implemented features:
 
@@ -21,10 +21,6 @@ Currently implemented features:
 - Data providers with custom priorities (partial)
 
 Other features are currently in development or testing and will be added in upcoming versions. Update info & notification is displayed at the bottom of the Limbo WebUI.
-
-> [!TIP]
->
-> When deploying from a terminal, use _screen_ or _tmux_ so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
 
 <p align="center">
   <img src="https://github.com/HVR88/Docs-Extras/blob/master/Limbo-open-1.9.227.png?raw=true" alt="Limbo" width="600" />
@@ -73,6 +69,10 @@ cp example.env .env
 
 Only `.env` is user-maintained. The stack refreshes managed files (admin scripts,
 compose template, and defaults) automatically when you update.
+
+> [!TIP]
+>
+> When deploying from a terminal, use _screen_ or _tmux_ so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
 
 ### 4. Download containers, build DB & startup (!) This takes 2-4 hours
 
