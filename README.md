@@ -2,13 +2,13 @@
   <img src="https://raw.githubusercontent.com/HVR88/Limbo_DEV/main/assets/limbo-icon.png" alt="Limbo" width="400" />
 </p>
 
-# <p align="center">**_Limbo_**<br><sub>**_Lidarr Tools & Full MusicBrainz Server_**</sub></p>
+# <p align="center">**Limbo**<br><sub>**_Lidarr Tools & Full MusicBrainz Server_**</sub></p>
 
 ## Introduction
 
-Limbo is a set of tools and data bridge for Lidarr. It also contains a MusicBrainz mirror server with fast, easy and automated installation.
+Limbo is a set of tools and data bridge for Lidarr. It contains a MusicBrainz mirror server with fast, easy and automated installation.
 
-Limbo packages the Lidarr Metadata API and bridges queries to the MusicBrainz database, allowing 100% local access to all metadata. That means no online Lidarr database issues, pre-caching or other nonsense. Just FAST LAN-based performance.
+Limbo packages the Lidarr Metadata API and bridges queries to the MusicBrainz database, providing local access to all metadata. No online Lidarr databases, "cache-warming" or other nonsense. Just fast LAN-based performance.
 
 _You say that you don't want vinyl formats in releases? No problem, filter that out._
 
@@ -20,7 +20,7 @@ Currently implemented features:
 - Release / Artist refreshing
 - Data providers with custom priorities (partial)
 
-Other features are currently in development or testing and will be added in upcoming versions. Update info & notification is displayed at the bottom of the Limbo WebUI.
+Other features are currently in development or testing. Update notifications are displayed at the bottom of the Limbo WebUI.
 
 <p align="center">
   <img src="https://github.com/HVR88/Docs-Extras/blob/master/Limbo-open-1.9.227.png?raw=true" alt="Limbo" width="600" />
