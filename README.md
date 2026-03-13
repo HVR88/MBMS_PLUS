@@ -92,7 +92,7 @@ Or with less "noise:"
 
 ```
 docker compose logs -f --no-log-prefix --tail=200 \
-  bootstrap search-bootstrap search musicbrainz indexer indexer-cron limbo
+  bootstrap search-bootstrap search musicbrainz indexer indexer-cron limbo slskd
 
 ```
 
@@ -101,6 +101,8 @@ docker compose logs -f --no-log-prefix --tail=200 \
 When finished, the Limbo settings are available at **http://HOST_IP:5001**
 
 And the standard MusicBrainz webUI at **http://HOST_IP:5000**
+
+And slskd is available at **http://HOST_IP:5030** (HTTPS: `5031`)
 
 > [!TIP]
 >
