@@ -2,13 +2,13 @@
   <img src="https://raw.githubusercontent.com/HVR88/Limbo_DEV/main/assets/limbo-icon.png" alt="Limbo" width="400" />
 </p>
 
-# <p align="center">**Limbo**<br><sub>**_Lidarr Tools & Full MusicBrainz Server_**</sub></p>
+# <p align="center">**Limbo**<br><sub>**_Lidarr Tools, Download Manager, & Full MusicBrainz Server_**</sub></p>
 
 ## Introduction
 
-Limbo is a set of tools and data bridge for Lidarr. It contains a MusicBrainz mirror server with fast, easy and automated installation.
+Limbo is a set of tools, including a download manager, for Lidarr. It contains a full MusicBrainz mirror server with fast, easy and automated installation.
 
-Limbo packages the Lidarr Metadata API and bridges queries to the MusicBrainz database, providing local access to all metadata. No online Lidarr databases, "cache-warming" or other nonsense. Just fast LAN-based performance.
+Limbo packages the Lidarr Metadata API and bridges queries to the mirror database directly, providing local access to all metadata. No online Lidarr databases, "cache-warming" or other nonsense. Just fast LAN-based performance.
 
 _You say that you don't want vinyl formats in releases? No problem, filter that out._
 
@@ -19,6 +19,7 @@ Currently implemented features:
 - Release filtering
 - Release / Artist refreshing
 - Data providers with custom priorities (partial)
+- Automated / Manual Download Manager (work in progress)
 
 Other features are currently in development or testing. Update notifications are displayed at the bottom of the Limbo WebUI.
 
