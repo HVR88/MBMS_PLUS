@@ -212,12 +212,12 @@ services:
         source: ${LIMBO_SLSKD_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT:-/tmp/limbo_slskd_parent_mount}/slskd_downloads}
         target: /downloads
         bind:
-          create_host_path: false
+          create_host_path: true
       - type: bind
         source: ${LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT:-/tmp/limbo_slskd_parent_mount}/slskd_downloads}/slskd_incomplete}
         target: /incomplete
         bind:
-          create_host_path: false
+          create_host_path: true
     restart: unless-stopped
     depends_on:
       <<: *assets_depends
