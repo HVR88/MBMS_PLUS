@@ -75,7 +75,9 @@ services:
     command:
       - |
         if [ -z "${LIMBO_SLSKD_PARENT_MOUNT:-}" ]; then
-          echo "Missing LIMBO_SLSKD_PARENT_MOUNT. slskd will not start until it is set in .env." >&2
+          echo "ERROR: SLSKD_DISABLED_MISSING_PARENT_MOUNT" >&2
+          echo "ERROR: LIMBO_SLSKD_PARENT_MOUNT is empty. slskd will not start." >&2
+          echo "ERROR: Set LIMBO_SLSKD_PARENT_MOUNT to an absolute host path in .env and run docker compose up -d again." >&2
           exit 1
         fi
         case "${LIMBO_SLSKD_PARENT_MOUNT:-}" in
@@ -86,7 +88,7 @@ services:
             ;;
         esac
         if [ -n "${LIMBO_SLSKD_DOWNLOADS_MOUNT:-}" ]; then
-          case "${LIMBO_SLSKD_DOWNLOADS_MOUNT}" in
+          case "${LIMBO_SLSKD_DOWNLOADS_MOUNT:-}" in
             /*) ;;
             *)
               echo "LIMBO_SLSKD_DOWNLOADS_MOUNT must be an absolute host path when set." >&2
@@ -95,7 +97,7 @@ services:
           esac
         fi
         if [ -n "${LIMBO_SLSKD_SHARING_MOUNT:-}" ]; then
-          case "${LIMBO_SLSKD_SHARING_MOUNT}" in
+          case "${LIMBO_SLSKD_SHARING_MOUNT:-}" in
             /*) ;;
             *)
               echo "LIMBO_SLSKD_SHARING_MOUNT must be an absolute host path when set." >&2
@@ -104,7 +106,7 @@ services:
           esac
         fi
         if [ -n "${LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT:-}" ]; then
-          case "${LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT}" in
+          case "${LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT:-}" in
             /*) ;;
             *)
               echo "LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT must be an absolute host path when set." >&2
