@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/HVR88/Limbo_DEV/main/assets/limbo-icon.png" alt="Limbo" width="400" />
 </p>
 
-# <p align="center">**Limbo**<br><sub>**_Lidarr Tools, Download Manager, & Full MusicBrainz Server_**</sub></p>
+# <p align="center">**Limbo**<br><sub>**_Lidarr Tools | Download Manager | MusicBrainz Server_**</sub></p>
 
 ## Introduction
 
