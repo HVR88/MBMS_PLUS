@@ -1,4 +1,4 @@
-#   Limbo 1.9.313.220
+#   Limbo 1.9.313.221
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -51,6 +51,18 @@ services:
       - ./.env
     volumes:
       - ./admin/preflight:/opt/limbo-preflight:ro
+    restart: "no"
+    depends_on:
+      <<: *assets_depends
+
+  slskd-auth-init:
+    image: alpine:3.20
+    entrypoint: ["/bin/sh", "/opt/limbo-preflight/init-slskd-auth.sh"]
+    env_file:
+      - ./.env
+    volumes:
+      - ./admin/preflight:/opt/limbo-preflight:ro
+      - ./.limbo:/opt/limbo-state
     restart: "no"
     depends_on:
       <<: *assets_depends
@@ -114,6 +126,8 @@ services:
   slskd:
     image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-slskd:${LIMBO_CHANNEL:-latest}
     pull_policy: always
+    env_file:
+      - ./.limbo/slskd-auth.env
     logging:
       driver: "json-file"
       options:
@@ -131,8 +145,6 @@ services:
       - SLSKD_USERNAME=${LIMBO_USERNAME:-}
       - SLSKD_PASSWORD=${LIMBO_PASSWORD:-}
       - SLSKD_API_KEY=${LIMBO_APIKEY:-}
-      - SLSKD_DOWNLOADS_DIR=/downloads
-      - SLSKD_INCOMPLETE_DIR=/incomplete
     volumes:
       - slskd_data:/app
       - type: bind
@@ -158,9 +170,12 @@ services:
     restart: unless-stopped
     depends_on:
       <<: *assets_depends
-      slskd-preflight:
+      slskd-auth-init:
         condition: service_completed_successfully
         required: true
+      slskd-preflight:
+        condition: service_completed_successfully
+        required: false
 
   bootstrap:
     image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-bootstrap:${LIMBO_CHANNEL:-latest}
