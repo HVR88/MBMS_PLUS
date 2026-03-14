@@ -1,4 +1,4 @@
-#   Limbo 1.9.314.223
+#   Limbo 1.9.314.225
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -51,18 +51,6 @@ services:
       - ./.env
     volumes:
       - ./admin/preflight:/opt/limbo-preflight:ro
-    restart: "no"
-    depends_on:
-      <<: *assets_depends
-
-  slskd-auth-init:
-    image: alpine:3.20
-    entrypoint: ["/bin/sh", "/opt/limbo-preflight/init-slskd-auth.sh"]
-    env_file:
-      - ./.env
-    volumes:
-      - ./admin/preflight:/opt/limbo-preflight:ro
-      - ./admin/.limbo:/opt/limbo-state
     restart: "no"
     depends_on:
       <<: *assets_depends
@@ -126,9 +114,6 @@ services:
   slskd:
     image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-slskd:${LIMBO_CHANNEL:-latest}
     pull_policy: always
-    env_file:
-      - path: ./admin/.limbo/slskd-auth.env
-        required: false
     logging:
       driver: "json-file"
       options:
@@ -171,9 +156,6 @@ services:
     restart: unless-stopped
     depends_on:
       <<: *assets_depends
-      slskd-auth-init:
-        condition: service_completed_successfully
-        required: true
       slskd-preflight:
         condition: service_completed_successfully
         required: false
