@@ -1,10 +1,5 @@
+#   Limbo 1.9.314.229
 # Description: Deploy compose file with managed assets sync
-
-x-require-env: ${MUSICBRAINZ_REPLICATION_TOKEN}
-x-require-env-guard: ${MUSICBRAINZ_REPLICATION_TOKEN:?You need to set MUSICBRAINZ_REPLICATION_TOKEN in .env before starting.}
-x-require-env-guard-limbo-username: ${LIMBO_USERNAME:?You need to set LIMBO_USERNAME in .env before starting.}
-x-require-env-guard-limbo-password: ${LIMBO_PASSWORD:?You need to set LIMBO_PASSWORD in .env before starting.}
-x-require-env-guard-slskd-share: ${LIMBO_SLSKD_PARENT_MOUNT:?You need to set LIMBO_SLSKD_PARENT_MOUNT to a host path in .env before starting.}
 
 x-assets-depends: &assets_depends
   assets:
@@ -29,81 +24,40 @@ volumes:
 
 services:
   assets:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-assets:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-assets:${LIMBO_CHANNEL:-latest}
     pull_policy: always
+    environment:
+      - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
     volumes:
       - ./:/out
     restart: "no"
 
   preflight:
     image: alpine:3.20
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        if [ -z "${MUSICBRAINZ_REPLICATION_TOKEN:-}" ]; then
-          echo "Missing MUSICBRAINZ_REPLICATION_TOKEN. Set it in .env before running docker compose up." >&2
-          exit 1
-        fi
-        missing_keys=""
-        for key in LIMBO_USERNAME LIMBO_PASSWORD LIMBO_SLSKD_PARENT_MOUNT SLSKD_SLSK_USERNAME SLSKD_SLSK_PASSWORD; do
-          if ! grep -Eq "^[[:space:]]*$${key}=" /run/limbo.env; then
-            missing_keys="$${missing_keys} $${key}"
-          fi
-        done
-        if [ -n "$${missing_keys}" ]; then
-          echo "WARNING: Detected an older .env template with missing keys."
-          echo "WARNING: Missing keys:$${missing_keys}"
-          echo "WARNING: You are running a newer Limbo version with an older .env file."
-          echo "WARNING: Update your .env by merging from the latest example.env."
-        fi
-        if [ -z "${LIMBO_USERNAME:-}" ]; then
-          echo "Missing LIMBO_USERNAME. Set it in .env before running docker compose up." >&2
-          exit 1
-        fi
-        if [ -z "${LIMBO_PASSWORD:-}" ]; then
-          echo "Missing LIMBO_PASSWORD. Set it in .env before running docker compose up." >&2
-          exit 1
-        fi
-        if [ -z "${LIMBO_SLSKD_PARENT_MOUNT:-}" ]; then
-          echo "Missing LIMBO_SLSKD_PARENT_MOUNT. Set it in .env to the host path you want slskd to share." >&2
-          exit 1
-        fi
-        case "${LIMBO_SLSKD_PARENT_MOUNT:-}" in
-          /*) ;;
-          *)
-            echo "LIMBO_SLSKD_PARENT_MOUNT must be an absolute host path (example: /mnt/media/music)." >&2
-            exit 1
-            ;;
-        esac
-        if [ -n "${LIMBO_SLSKD_DOWNLOADS_MOUNT:-}" ]; then
-          case "${LIMBO_SLSKD_DOWNLOADS_MOUNT}" in
-            /*) ;;
-            *)
-              echo "LIMBO_SLSKD_DOWNLOADS_MOUNT must be an absolute host path when set." >&2
-              exit 1
-              ;;
-          esac
-        fi
-        if [ -n "${LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT:-}" ]; then
-          case "${LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT}" in
-            /*) ;;
-            *)
-              echo "LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT must be an absolute host path when set." >&2
-              exit 1
-              ;;
-          esac
-        fi
-        echo "OK: replication token check passed."
+    entrypoint: ["/bin/sh", "/opt/limbo-preflight/core-env.sh"]
     env_file:
       - ./.env
     volumes:
       - ./.env:/run/limbo.env:ro
+      - ./admin/preflight:/opt/limbo-preflight:ro
+    restart: "no"
+    depends_on:
+      <<: *assets_depends
+
+  slskd-preflight:
+    image: alpine:3.20
+    entrypoint: ["/bin/sh", "/opt/limbo-preflight/slskd-mounts.sh"]
+    scale: ${LIMBO_SLSKD_SCALE:-1}
+    env_file:
+      - ./.env
+    volumes:
+      - ./admin/preflight:/opt/limbo-preflight:ro
     restart: "no"
     depends_on:
       <<: *assets_depends
 
   db:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-db:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-db:${LIMBO_CHANNEL:-latest}
     logging:
       driver: "json-file"
       options:
@@ -124,7 +78,7 @@ services:
       <<: *assets_depends
 
   mq:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-mq:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-mq:${LIMBO_CHANNEL:-latest}
     hostname: "mq"
     logging:
       driver: "json-file"
@@ -159,8 +113,9 @@ services:
       <<: *assets_depends
 
   slskd:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-slskd:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-slskd:${LIMBO_CHANNEL:-latest}
     pull_policy: always
+    scale: ${LIMBO_SLSKD_SCALE:-1}
     logging:
       driver: "json-file"
       options:
@@ -173,37 +128,40 @@ services:
     environment:
       - TZ=${TZ:-America/Toronto}
       - SLSKD_REMOTE_CONFIGURATION=${SLSKD_REMOTE_CONFIGURATION:-true}
-      - SLSKD_NO_AUTH=${SLSKD_WEBUI_NO_AUTH:-false}
+      - SLSKD_REMOTE_FILE_MANAGEMENT=${SLSKD_REMOTE_FILE_MANAGEMENT:-true}
       - SLSKD_USERNAME=${LIMBO_USERNAME:-}
       - SLSKD_PASSWORD=${LIMBO_PASSWORD:-}
-      - SLSKD_APIKEY=${LIMBO_APIKEY:-}
-      - SLSKD_DOWNLOADS_DIR=/downloads
-      - SLSKD_INCOMPLETE_DIR=/incomplete
-      - SLSKD_SLSK_USERNAME=${SLSKD_SLSK_USERNAME:-}
-      - SLSKD_SLSK_PASSWORD=${SLSKD_SLSK_PASSWORD:-}
+      - SLSKD_API_KEY=${LIMBO_APIKEY:-}
     volumes:
       - slskd_data:/app
       - type: bind
-        source: ${LIMBO_SLSKD_PARENT_MOUNT:?Set LIMBO_SLSKD_PARENT_MOUNT to an existing absolute host path before starting slskd.}
+        source: ${LIMBO_SLSKD_PARENT_MOUNT}
         target: /music
         bind:
-          create_host_path: false
+          create_host_path: true
       - type: bind
-        source: ${LIMBO_SLSKD_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT:?Set LIMBO_SLSKD_PARENT_MOUNT to an existing absolute host path before starting slskd.}/slskd_downloads}
+        source: ${LIMBO_SLSKD_SHARING_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT}/shared_files}
+        target: /shared_files
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${LIMBO_SLSKD_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT}/slskd_downloads}
         target: /downloads
         bind:
-          create_host_path: false
+          create_host_path: true
       - type: bind
-        source: ${LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT:?Set LIMBO_SLSKD_PARENT_MOUNT to an existing absolute host path before starting slskd.}/slskd_downloads}/slskd_incomplete}
+        source: ${LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT}/slskd_downloads}/slskd_incomplete}
         target: /incomplete
         bind:
-          create_host_path: false
+          create_host_path: true
     restart: unless-stopped
     depends_on:
       <<: *assets_depends
+      slskd-preflight:
+        condition: service_completed_successfully
 
   bootstrap:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-bootstrap:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-bootstrap:${LIMBO_CHANNEL:-latest}
     environment:
       - TZ=${TZ:-America/Toronto}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -227,7 +185,7 @@ services:
         condition: service_started
 
   search-bootstrap:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-search:${LIMBO_CHANNEL:-latest}
     entrypoint: ["/usr/local/bin/bootstrap-indexes.sh"]
     environment:
       - TZ=${TZ:-America/Toronto}
@@ -252,7 +210,7 @@ services:
         condition: service_completed_successfully
 
   search:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-search:${LIMBO_CHANNEL:-latest}
     logging:
       driver: "json-file"
       options:
@@ -278,7 +236,7 @@ services:
         condition: service_completed_successfully
 
   musicbrainz:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-musicbrainz:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-musicbrainz:${LIMBO_CHANNEL:-latest}
     logging:
       driver: "json-file"
       options:
@@ -335,7 +293,7 @@ services:
         condition: service_completed_successfully
 
   indexer:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-indexer:${LIMBO_CHANNEL:-latest}
     environment:
       - TZ=${TZ:-America/Toronto}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -355,7 +313,7 @@ services:
         condition: service_started
 
   indexer-cron:
-    image: ${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}/${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-indexer:${LIMBO_CHANNEL:-latest}
     environment:
       - TZ=${TZ:-America/Toronto}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -405,7 +363,7 @@ services:
       - "${LIMBO_PORT:-5001}:5001"
     volumes:
       - limbo_bridge_init_state:/metadata/init-state
-      - ./.mbms/assets/MBMS_TAG_VERSION:/mbms/VERSION:ro
+      - ./admin/.limbo/assets/LIMBO_TAG_VERSION:/limbo/VERSION:ro
     env_file:
       - .env
     environment:
@@ -417,9 +375,12 @@ services:
       USE_CACHE: "${USE_CACHE:-true}"
       ENABLE_STATS: "${ENABLE_STATS:-false}"
       ROOT_PATH: "${ROOT_PATH:-}"
-      MBMS_PLUS_VERSION_FILE: "/mbms/VERSION"
-      MBMS_REPLICATION_SCHEDULE: "${MBMS_REPLICATION_SCHEDULE:-}"
-      MBMS_INDEX_SCHEDULE: "${MBMS_INDEX_SCHEDULE:-}"
+      LIMBO_VERSION_FILE: "/limbo/VERSION"
+      MBMS_PLUS_VERSION_FILE: "/limbo/VERSION"
+      LIMBO_REPLICATION_SCHEDULE: "${LIMBO_REPLICATION_SCHEDULE:-${MBMS_REPLICATION_SCHEDULE:-}}"
+      MBMS_REPLICATION_SCHEDULE: "${LIMBO_REPLICATION_SCHEDULE:-${MBMS_REPLICATION_SCHEDULE:-}}"
+      LIMBO_INDEX_SCHEDULE: "${LIMBO_INDEX_SCHEDULE:-${MBMS_INDEX_SCHEDULE:-}}"
+      MBMS_INDEX_SCHEDULE: "${LIMBO_INDEX_SCHEDULE:-${MBMS_INDEX_SCHEDULE:-}}"
       MUSICBRAINZ_REPLICATION_ENABLED: "${MUSICBRAINZ_REPLICATION_ENABLED:-0}"
       MUSICBRAINZ_REPLICATION_SCHEDULE: "${MUSICBRAINZ_REPLICATION_SCHEDULE:-}"
       MUSICBRAINZ_REPLICATION_TIME: "${MUSICBRAINZ_REPLICATION_TIME:-03:00}"

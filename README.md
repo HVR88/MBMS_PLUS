@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Limbo is a set of tools, including a download manager, for Lidarr. It contains a full MusicBrainz mirror server with fast, easy and automated installation.
+Limbo is a multi-purpose tool and download manager for Lidarr. It contains a full MusicBrainz mirror server with fast, easy and automated installation. No plugins or settings need to be changed in Lidarr.
 
 Limbo packages the Lidarr Metadata API and bridges queries to the mirror database directly, providing local access to all metadata. No online Lidarr databases, "cache-warming" or other nonsense. Just fast LAN-based performance.
 
@@ -14,7 +14,7 @@ _You say that you don't want vinyl formats in releases? No problem, filter that 
 
 From the Limbo WebUI, you can filter/modify media formats for all releases, set up additional data providers (not normally supported by Lidarr) and fix artwork downloading for those it already supports.
 
-Currently implemented features:
+**Currently implemented features:**
 
 - Release filtering
 - Release / Artist refreshing
@@ -31,11 +31,12 @@ Other features are currently in development or testing. Update notifications are
 
 - Linux server / VM / LXC with Docker support
 - 300 GB of available storage (400-500 GB recommended)
+  - Additional storage for optional downloading and music sharing
 - 8 GB of memory available to the container
 - 2-4 hours installation time
 - MusicBrainz account and Data Feed access token
 
-## Quick start
+## Quick Start
 
 ### 1. Register for MusicBrainz access & token
 
@@ -62,26 +63,37 @@ Copy `example.env` to `.env`, then edit the top section before first run:
 cp example.env .env
 ```
 
-- Set **`MUSICBRAINZ_REPLICATION_TOKEN`**
-- Set the **`MUSICBRAINZ_REPLICATION_TOKEN`** (required for replication)
-- `MUSICBRAINZ_WEB_SERVER_HOST` ('localhost' default, edit as needed)
-- `MUSICBRAINZ_WEB_SERVER_PORT` ('5000' default, edit as needed)
-- Optional provider keys/tokens for Limbo (TheAudioDB, Fanart, Last.FM, etc.)
+Next configure these minimum variables in the .env file:
 
-Only `.env` is user-maintained. The stack refreshes managed files (admin scripts,
-compose template, and defaults) automatically when you update.
+- Set **`MUSICBRAINZ_REPLICATION_TOKEN`** (get from https://metabrainz.org/profile)
+
+- Set **LIMBO_USERNAME** (user for Limbo and slskd webUIs)
+
+- Set **LIMBO_PASSWORD** (password for Limbo and slskd webUIs)
+
+- Set **LIMBO_SLSKD_PARENT_MOUNT** (must point at a real mount)
+  - example: /mnt/MY_SMB_NAS_SHARE
+
+_Download features will be unavailable without this variable set._
+The path is available in slskd as "/music" and slskd's share folder is set as "/music/shared_files" by default. You can change this in the webUI to any other folder under "/music" to point to the music files you want to share
+
+You can optionally set the following variables if you want a different top-level for your download or share folders. Otherwise, you can set them under /music in the webUI:
+
+- Set **LIMBO_SLSKD_DOWNLOADS_MOUNT**
+- Set **LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT**
+- Set **LIMBO_SLSKD_SHARING_MOUNT**
 
 > [!TIP]
 >
 > When deploying from a terminal, use _screen_ or _tmux_ so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
 
-### 4. Download containers, build DB & startup (!) This takes 2-4 hours
+### 4. Download containers, build DB & start up (!) _This takes 2-4 hours_
 
 ```
 docker compose up -d
 ```
 
-## Wrap-up
+## Wrap-Up
 
 You can monitor the progress of the long first-time installation jobs from another terminal:
 
@@ -97,7 +109,7 @@ docker compose logs -f --no-log-prefix --tail=200 \
 
 ```
 
-## Browser access / status
+## Browser Access / Status
 
 When finished, the Limbo settings are available at **http://HOST_IP:5001**
 
@@ -107,9 +119,14 @@ And slskd is available at **http://HOST_IP:5030** (HTTPS: `5031`)
 
 > [!TIP]
 >
-> Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own (sub)domains to reach your Limbo and MusicBrainz LOCALLY on port 80 (HTTP) or 443 (HTTPS) (requries two host names, like limbo.yourdomain.net and mbrainz.yourdomain.net)
+> Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own (sub)domains to reach Limbo, slskd and MusicBrainz LOCALLY on port 80 (HTTP) or 443 (HTTPS) (requries a unique host name per service, like limbo.yourdomain.net, slskd.yourdomain.net and mbrainz.yourdomain.net)
 
 ## Updates
+
+The `.env` file is user-maintained and won't be changed when updating. Updating will refresh all other managed files (admin scripts,
+compose template, and defaults, including _example.env_) automatically.
+
+### Regular update
 
 Pull the latest images and restart:
 
@@ -118,8 +135,18 @@ docker compose pull
 docker compose up -d
 ```
 
-If a release updates `docker-compose.yml`, run `docker compose up -d` again
-after the first restart so the new compose file is applied.
+### Major update (with new components, etc.)
+
+Pull the latest images and restart two times:
+
+```
+docker compose pull
+docker compose up -d
+docker compose down
+docker compose up -d
+```
+
+You should also look in the _`example.env`_ file for updates that may need to be applied to `.env` - if there are new required variables, you should get a warning on the second compose up.
 
 ## Limbo Configuration
 
