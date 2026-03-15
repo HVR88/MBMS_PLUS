@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/HVR88/Limbo_DEV/main/assets/limbo-icon.png" alt="Limbo" width="400" />
+  <img src="https://raw.githubusercontent.com/HVR88/Docs-Extras/master/limbo-icon.png" alt="Limbo" width="400" />
 </p>
 
 # <p align="center">**Limbo**<br><sub>**_Lidarr Tools | Download Manager | MusicBrainz Server_**</sub></p>
@@ -171,7 +171,7 @@ _**Use the SETTINGS button on the top right of the webUI to configure your Lidar
 
 ### Source code, licenses and development repo:
 
-https://github.com/HVR88/Limbo-MusicBrainz_DEV
+https://github.com/HVR88/DEV_Limbo-Stack
 
 ## Maintenance (optional)
 
