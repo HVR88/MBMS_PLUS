@@ -1,4 +1,4 @@
-#   Limbo 1.9.314.229
+#   Limbo 1.9.314.228
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -47,7 +47,6 @@ services:
   slskd-preflight:
     image: alpine:3.20
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/slskd-mounts.sh"]
-    scale: ${LIMBO_SLSKD_SCALE:-1}
     env_file:
       - ./.env
     volumes:
@@ -115,7 +114,6 @@ services:
   slskd:
     image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-slskd:${LIMBO_CHANNEL:-latest}
     pull_policy: always
-    scale: ${LIMBO_SLSKD_SCALE:-1}
     logging:
       driver: "json-file"
       options:
@@ -159,6 +157,7 @@ services:
       <<: *assets_depends
       slskd-preflight:
         condition: service_completed_successfully
+        required: false
 
   bootstrap:
     image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-bootstrap:${LIMBO_CHANNEL:-latest}
