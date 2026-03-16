@@ -1,4 +1,4 @@
-#   Limbo 1.9.316.246
+#   Limbo 1.9.316.250
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -129,6 +129,8 @@ services:
       - TZ=${TZ:-UTC}
       - SLSKD_REMOTE_CONFIGURATION=${SLSKD_REMOTE_CONFIGURATION:-true}
       - SLSKD_REMOTE_FILE_MANAGEMENT=${SLSKD_REMOTE_FILE_MANAGEMENT:-true}
+      - SLSKD_USERNAME=${LIMBO_USERNAME:-limbo}
+      - SLSKD_PASSWORD=${LIMBO_PASSWORD:-limbo}
       - LIMBO_APIKEY=${LIMBO_APIKEY:-}
       - SLSKD_API_KEY=${LIMBO_APIKEY:-}
     volumes:
