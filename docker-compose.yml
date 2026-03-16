@@ -1,4 +1,4 @@
-#   Limbo 1.9.316.250
+#   Limbo 1.9.316.255
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
