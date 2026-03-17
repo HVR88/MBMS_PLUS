@@ -1,8 +1,8 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/HVR88/Docs-Extras/master/limbo-icon.png" alt="Limbo" width="400" />
+<p align="center" style="white-space: nowrap;">
+  <img src="https://raw.githubusercontent.com/HVR88/Docs-Extras/master/limbo-icon.png" alt="Limbo" width="160" /><span style="font-weight:900; font-size:80px;">Limbo</span>
 </p>
 
-# <p align="center">**Limbo**<br><sub>**_Lidarr Tools | Download Manager | MusicBrainz Server_**</sub></p>
+# <p align="center"><sub>**_Lidarr Tools | Download Manager | MusicBrainz Server_**</sub></p>
 
 ## Introduction
 
