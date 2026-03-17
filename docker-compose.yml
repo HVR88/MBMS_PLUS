@@ -1,4 +1,4 @@
-#   Limbo 1.9.316.255
+#   Limbo 1.9.317.601
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -24,7 +24,7 @@ volumes:
 
 services:
   assets:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-assets:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-assets:${LIMBO_CHANNEL:-latest}
     pull_policy: always
     environment:
       - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
@@ -57,7 +57,7 @@ services:
       <<: *assets_depends
 
   db:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-db:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-db:${LIMBO_CHANNEL:-latest}
     logging:
       driver: "json-file"
       options:
@@ -78,7 +78,7 @@ services:
       <<: *assets_depends
 
   mq:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-mq:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-mq:${LIMBO_CHANNEL:-latest}
     hostname: "mq"
     logging:
       driver: "json-file"
@@ -113,7 +113,7 @@ services:
       <<: *assets_depends
 
   slskd:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-slskd:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-slskd:${LIMBO_CHANNEL:-latest}
     pull_policy: always
     scale: ${LIMBO_SLSKD_SCALE:-1}
     logging:
@@ -163,7 +163,7 @@ services:
         condition: service_completed_successfully
 
   bootstrap:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-bootstrap:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-bootstrap:${LIMBO_CHANNEL:-latest}
     environment:
       - TZ=${TZ:-UTC}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -187,7 +187,7 @@ services:
         condition: service_started
 
   search-bootstrap:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-search:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
     entrypoint: ["/usr/local/bin/bootstrap-indexes.sh"]
     environment:
       - TZ=${TZ:-UTC}
@@ -212,7 +212,7 @@ services:
         condition: service_completed_successfully
 
   search:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-search:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
     logging:
       driver: "json-file"
       options:
@@ -238,7 +238,7 @@ services:
         condition: service_completed_successfully
 
   musicbrainz:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-musicbrainz:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-musicbrainz:${LIMBO_CHANNEL:-latest}
     logging:
       driver: "json-file"
       options:
@@ -264,17 +264,17 @@ services:
       - MUSICBRAINZ_REPLICATION_TIME=${MUSICBRAINZ_REPLICATION_TIME:-03:00}
       - MUSICBRAINZ_REPLICATION_SCHEDULE=${MUSICBRAINZ_REPLICATION_SCHEDULE:-}
       - MUSICBRAINZ_REPLICATION_TOKEN=${MUSICBRAINZ_REPLICATION_TOKEN:-}
-      - MBMS_ADMIN_ENABLED=${MBMS_ADMIN_ENABLED:-true}
-      - MBMS_ADMIN_KEY=${LIMBO_APIKEY:-}
-      - MBMS_ADMIN_HOST=${MBMS_ADMIN_HOST:-0.0.0.0}
-      - MBMS_ADMIN_PORT=${MBMS_ADMIN_PORT:-8099}
-      - MBMS_ADMIN_HEADER=${MBMS_ADMIN_HEADER:-X-MBMS-Key}
-      - MBMS_ADMIN_NOTIFY_URL=${MBMS_ADMIN_NOTIFY_URL:-http://limbo:5001/replication/notify}
-      - MBMS_ADMIN_NOTIFY_HEADER=${MBMS_ADMIN_NOTIFY_HEADER:-X-MBMS-Key}
-      - MBMS_ADMIN_NOTIFY_KEY=${LIMBO_APIKEY:-}
-      - MBMS_ADMIN_NOTIFY_TIMEOUT=${MBMS_ADMIN_NOTIFY_TIMEOUT:-5}
-      - MBMS_ADMIN_LOCK=${MBMS_ADMIN_LOCK:-/tmp/replication.pid}
-      - MBMS_ADMIN_REPL_SCRIPT=${MBMS_ADMIN_REPL_SCRIPT:-/usr/local/bin/replication.sh}
+      - LIMBO_ADMIN_ENABLED=${LIMBO_ADMIN_ENABLED:-true}
+      - LIMBO_ADMIN_KEY=${LIMBO_APIKEY:-}
+      - LIMBO_ADMIN_HOST=${LIMBO_ADMIN_HOST:-0.0.0.0}
+      - LIMBO_ADMIN_PORT=${LIMBO_ADMIN_PORT:-8099}
+      - LIMBO_ADMIN_HEADER=${LIMBO_ADMIN_HEADER:-X-Limbo-Key}
+      - LIMBO_ADMIN_NOTIFY_URL=${LIMBO_ADMIN_NOTIFY_URL:-http://limbo:5001/replication/notify}
+      - LIMBO_ADMIN_NOTIFY_HEADER=${LIMBO_ADMIN_NOTIFY_HEADER:-X-Limbo-Key}
+      - LIMBO_ADMIN_NOTIFY_KEY=${LIMBO_APIKEY:-}
+      - LIMBO_ADMIN_NOTIFY_TIMEOUT=${LIMBO_ADMIN_NOTIFY_TIMEOUT:-5}
+      - LIMBO_ADMIN_LOCK=${LIMBO_ADMIN_LOCK:-/tmp/replication.pid}
+      - LIMBO_ADMIN_REPL_SCRIPT=${LIMBO_ADMIN_REPL_SCRIPT:-/usr/local/bin/replication.sh}
       - MUSICBRAINZ_USE_PROXY=1
       - MUSICBRAINZ_WEB_SERVER_HOST=${MUSICBRAINZ_WEB_SERVER_HOST:-localhost}
       - MUSICBRAINZ_WEB_SERVER_PORT=${MUSICBRAINZ_WEB_SERVER_PORT:-5000}
@@ -296,7 +296,7 @@ services:
         condition: service_completed_successfully
 
   indexer:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-indexer:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:${LIMBO_CHANNEL:-latest}
     environment:
       - TZ=${TZ:-UTC}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -316,7 +316,7 @@ services:
         condition: service_started
 
   indexer-cron:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-${MBMS_DOCKERHUB_NAMESPACE:-espressomatic}}/${LIMBO_DOCKERHUB_REPO_PREFIX:-${MBMS_DOCKERHUB_REPO_PREFIX:-limbo}}-indexer:${LIMBO_CHANNEL:-latest}
+    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:${LIMBO_CHANNEL:-latest}
     environment:
       - TZ=${TZ:-UTC}
       - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
@@ -381,11 +381,8 @@ services:
       ENABLE_STATS: "${ENABLE_STATS:-false}"
       ROOT_PATH: "${ROOT_PATH:-}"
       LIMBO_VERSION_FILE: "/limbo/VERSION"
-      MBMS_PLUS_VERSION_FILE: "/limbo/VERSION"
-      LIMBO_REPLICATION_SCHEDULE: "${LIMBO_REPLICATION_SCHEDULE:-${MBMS_REPLICATION_SCHEDULE:-}}"
-      MBMS_REPLICATION_SCHEDULE: "${LIMBO_REPLICATION_SCHEDULE:-${MBMS_REPLICATION_SCHEDULE:-}}"
-      LIMBO_INDEX_SCHEDULE: "${LIMBO_INDEX_SCHEDULE:-${MBMS_INDEX_SCHEDULE:-}}"
-      MBMS_INDEX_SCHEDULE: "${LIMBO_INDEX_SCHEDULE:-${MBMS_INDEX_SCHEDULE:-}}"
+      LIMBO_REPLICATION_SCHEDULE: "${LIMBO_REPLICATION_SCHEDULE:-}"
+      LIMBO_INDEX_SCHEDULE: "${LIMBO_INDEX_SCHEDULE:-}"
       MUSICBRAINZ_REPLICATION_ENABLED: "${MUSICBRAINZ_REPLICATION_ENABLED:-1}"
       MUSICBRAINZ_REPLICATION_SCHEDULE: "${MUSICBRAINZ_REPLICATION_SCHEDULE:-}"
       MUSICBRAINZ_REPLICATION_TIME: "${MUSICBRAINZ_REPLICATION_TIME:-03:00}"
@@ -394,6 +391,10 @@ services:
       MUSICBRAINZ_INDEXING_FREQUENCY: "${MUSICBRAINZ_INDEXING_FREQUENCY:-weekly}"
       MUSICBRAINZ_INDEXING_DAY: "${MUSICBRAINZ_INDEXING_DAY:-Sunday}"
       MUSICBRAINZ_INDEXING_TIME: "${MUSICBRAINZ_INDEXING_TIME:-01:00}"
+      LIMBO_ART_ENGINE_ENABLED: "${LIMBO_ART_ENGINE_ENABLED:-true}"
+      LIMBO_ART_ENGINE_CACHE_ENABLED: "${LIMBO_ART_ENGINE_CACHE_ENABLED:-true}"
+      LIMBO_ART_ENGINE_CACHE_TTL_SECONDS: "${LIMBO_ART_ENGINE_CACHE_TTL_SECONDS:-}"
+      LIMBO_ARTWORK_DEBUG_ENABLED: "${LIMBO_ARTWORK_DEBUG_ENABLED:-false}"
 
       # --- Redis ---
       REDIS_HOST: "${REDIS_HOST:-redis}"

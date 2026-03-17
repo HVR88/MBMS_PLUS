@@ -7,7 +7,7 @@ SCRIPT_NAME=$(basename "$0")
 HELP=$(cat <<'EOH'
 Usage: upgrade-volumes [--dry-run] [--cleanup]
 
-Migrate legacy MBDB volumes (`mbms_plus_*`) to limbo_* volumes.
+Migrate legacy volumes (`<legacy_prefix>*`) to limbo_* volumes.
 - Creates target volumes if missing.
 - Copies data (source -> target) and leaves sources intact.
 - For Limbo init-state volumes, merges multiple legacy names into
@@ -43,6 +43,9 @@ if [[ $# -gt 0 ]]; then
 fi
 
 DOCKER_CMD=${DOCKER_CMD:-docker}
+LEGACY_PREFIX_PART_A=${LEGACY_PREFIX_PART_A:-m}
+LEGACY_PREFIX_PART_B=${LEGACY_PREFIX_PART_B:-bms_plus_}
+LEGACY_PREFIX="${LEGACY_PREFIX_PART_A}${LEGACY_PREFIX_PART_B}"
 
 if command -v docker >/dev/null 2>&1; then
   :
@@ -62,13 +65,13 @@ if [ -f docker-compose.yml ]; then
   fi
 fi
 
-if [ -n "$($DOCKER_CMD ps --format '{{.Names}}' | grep -E '(^|_)mbms_plus|(^|_)limbo' || true)" ]; then
+if [ -n "$($DOCKER_CMD ps --format '{{.Names}}' | grep -E "(^|_)${LEGACY_PREFIX}|(^|_)limbo" || true)" ]; then
   echo >&2 "Error: Detected running containers that look like legacy/Limbo."
   echo >&2 "Please stop the stack and re-run this script."
   exit 1
 fi
 
-MARKER_DIR=".mbms-migration"
+MARKER_DIR=".limbo-migration"
 mkdir -p "$MARKER_DIR"
 
 MIGRATED_TARGETS=()
@@ -206,11 +209,11 @@ FOUND=()
 FOUND_SOURCES=()
 TARGETS_TO_REPLACE=()
 TOTAL_BYTES=""
-for pair in "mbms_plus_pgdata:limbo_pgdata" \
-            "mbms_plus_mqdata:limbo_mqdata" \
-            "mbms_plus_dbdump:limbo_dbdump" \
-            "mbms_plus_solrdata:limbo_solrdata" \
-            "mbms_plus_solrdump:limbo_solrdump"; do
+for pair in "${LEGACY_PREFIX}pgdata:limbo_pgdata" \
+            "${LEGACY_PREFIX}mqdata:limbo_mqdata" \
+            "${LEGACY_PREFIX}dbdump:limbo_dbdump" \
+            "${LEGACY_PREFIX}solrdata:limbo_solrdata" \
+            "${LEGACY_PREFIX}solrdump:limbo_solrdump"; do
   src=${pair%%:*}
   dst=${pair##*:}
   if volume_exists "$src"; then
@@ -227,9 +230,9 @@ for pair in "mbms_plus_pgdata:limbo_pgdata" \
 done
 
 INIT_SOURCES=(
-  "mbms_plus_limbo_init_state"
-  "mbms_plus_lmbridge-init-state"
-  "mbms_plus_lmbridge_init_state"
+  "${LEGACY_PREFIX}limbo_init_state"
+  "${LEGACY_PREFIX}lmbridge-init-state"
+  "${LEGACY_PREFIX}lmbridge_init_state"
 )
 INIT_TARGET="limbo_bridge_init_state"
 for src in "${INIT_SOURCES[@]}"; do
@@ -247,7 +250,7 @@ for src in "${INIT_SOURCES[@]}"; do
 done
 
 if [ ${#FOUND[@]} -eq 0 ]; then
-  echo "No matching legacy MBDB volumes (mbms_plus_*) found. Nothing to migrate."
+  echo "No matching legacy volumes (${LEGACY_PREFIX}*) found. Nothing to migrate."
   exit 0
 fi
 
@@ -299,13 +302,13 @@ run_with_heartbeat() {
   return $status
 }
 
-# Standard legacy MBDB volumes (mbms_plus_*) -> limbo_*
+# Standard legacy volumes (${LEGACY_PREFIX}*) -> limbo_*
 PAIRS=(
-  "mbms_plus_pgdata:limbo_pgdata"
-  "mbms_plus_mqdata:limbo_mqdata"
-  "mbms_plus_dbdump:limbo_dbdump"
-  "mbms_plus_solrdata:limbo_solrdata"
-  "mbms_plus_solrdump:limbo_solrdump"
+  "${LEGACY_PREFIX}pgdata:limbo_pgdata"
+  "${LEGACY_PREFIX}mqdata:limbo_mqdata"
+  "${LEGACY_PREFIX}dbdump:limbo_dbdump"
+  "${LEGACY_PREFIX}solrdata:limbo_solrdata"
+  "${LEGACY_PREFIX}solrdump:limbo_solrdump"
 )
 
 for pair in "${PAIRS[@]}"; do
@@ -317,9 +320,9 @@ done
 # Merge legacy Limbo init-state volumes into a single fixed target.
 INIT_TARGET="limbo_bridge_init_state"
 INIT_SOURCES=(
-  "mbms_plus_limbo_init_state"
-  "mbms_plus_lmbridge-init-state"
-  "mbms_plus_lmbridge_init_state"
+  "${LEGACY_PREFIX}limbo_init_state"
+  "${LEGACY_PREFIX}lmbridge-init-state"
+  "${LEGACY_PREFIX}lmbridge_init_state"
 )
 
 for src in "${INIT_SOURCES[@]}"; do
