@@ -1,4 +1,4 @@
-#   Limbo 1.9.317.601
+#   Limbo 1.9.317.602
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -395,6 +395,7 @@ services:
       LIMBO_ART_ENGINE_CACHE_ENABLED: "${LIMBO_ART_ENGINE_CACHE_ENABLED:-true}"
       LIMBO_ART_ENGINE_CACHE_TTL_SECONDS: "${LIMBO_ART_ENGINE_CACHE_TTL_SECONDS:-}"
       LIMBO_ARTWORK_DEBUG_ENABLED: "${LIMBO_ARTWORK_DEBUG_ENABLED:-false}"
+      LIMBO_REFRESH_VALIDATE_TIMEOUT_SECONDS: "${LIMBO_REFRESH_VALIDATE_TIMEOUT_SECONDS:-15}"
 
       # --- Redis ---
       REDIS_HOST: "${REDIS_HOST:-redis}"
