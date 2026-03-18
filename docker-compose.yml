@@ -1,4 +1,4 @@
-#   Limbo 1.9.318.701
+#   Limbo 1.9.318.704
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -33,25 +33,22 @@ services:
     restart: "no"
 
   preflight:
-    image: alpine:3.20
+    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/core-env.sh"]
     env_file:
       - ./.env
     volumes:
       - ./.env:/run/limbo.env:ro
-      - ./admin/preflight:/opt/limbo-preflight:ro
     restart: "no"
     depends_on:
       <<: *assets_depends
 
   slskd-preflight:
-    image: alpine:3.20
+    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/slskd-mounts.sh"]
     scale: ${LIMBO_SLSKD_SCALE:-1}
     env_file:
       - ./.env
-    volumes:
-      - ./admin/preflight:/opt/limbo-preflight:ro
     restart: "no"
     depends_on:
       <<: *assets_depends
