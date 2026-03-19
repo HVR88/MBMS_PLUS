@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/HVR88/Docs-Extras/master/LimboLogo.png" alt="Limbo" width="360" />
 </p>
 
-# <p align="center"><sub>**_Lidarr Tools | Download Manager | MusicBrainz Server_**</sub></p>
+# <p align="center"><sub>**_Lidarr Tools | Downloader | Data Server_**</sub></p>
 
 ## Introduction
 
@@ -16,11 +16,11 @@ From the Limbo WebUI, you can filter/modify media formats for all releases, set 
 
 **Currently implemented features:**
 
-- Release filtering
-- Release / Artist refreshing
-- Art + Data providers selection & priority ordering
-- Automated / Manual Download Manager (work in progress)
 - Library Statistics
+- Release filtering (block specific media formats: vinyl, tape, etc.)
+- Release / Artist refreshing (paste URL/ID single/bulk and refrecs albums/artists)
+- Expanded Art + Data providers selection, with drag & drop priority order
+- Automated / Manual Download Manager (partial - slskd)
 
 Other features are currently in development or testing. Update notifications are displayed at the bottom of the Limbo WebUI.
 

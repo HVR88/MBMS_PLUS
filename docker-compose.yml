@@ -1,4 +1,4 @@
-#   Limbo 1.9.320.0
+#   Limbo 1.9.320.200
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -222,7 +222,6 @@ services:
       - TZ=${TZ:-UTC}
       - SOLR_HEAP=${SOLR_HEAP:-4g}
       - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
-    mem_swappiness: 1
     expose:
       - "8983"
     volumes:
