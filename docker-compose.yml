@@ -1,4 +1,4 @@
-#   Limbo 1.9.320.100
+#   Limbo 1.9.320.401
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -245,6 +245,7 @@ services:
     volumes:
       - dbdump:/media/dbdump
       - solrdump:/var/cache/musicbrainz/solr-backups:ro
+      - limbo_bridge_init_state:/metadata/init-state:ro
     restart: unless-stopped
     environment:
       - TZ=${TZ:-UTC}
@@ -261,13 +262,11 @@ services:
       - MUSICBRAINZ_REPLICATION_SCHEDULE=${MUSICBRAINZ_REPLICATION_SCHEDULE:-}
       - MUSICBRAINZ_REPLICATION_TOKEN=${MUSICBRAINZ_REPLICATION_TOKEN:-}
       - LIMBO_ADMIN_ENABLED=${LIMBO_ADMIN_ENABLED:-true}
-      - LIMBO_ADMIN_KEY=${LIMBO_APIKEY:-}
       - LIMBO_ADMIN_HOST=${LIMBO_ADMIN_HOST:-0.0.0.0}
       - LIMBO_ADMIN_PORT=${LIMBO_ADMIN_PORT:-8099}
       - LIMBO_ADMIN_HEADER=${LIMBO_ADMIN_HEADER:-X-Limbo-Key}
       - LIMBO_ADMIN_NOTIFY_URL=${LIMBO_ADMIN_NOTIFY_URL:-http://limbo:5001/replication/notify}
       - LIMBO_ADMIN_NOTIFY_HEADER=${LIMBO_ADMIN_NOTIFY_HEADER:-X-Limbo-Key}
-      - LIMBO_ADMIN_NOTIFY_KEY=${LIMBO_APIKEY:-}
       - LIMBO_ADMIN_NOTIFY_TIMEOUT=${LIMBO_ADMIN_NOTIFY_TIMEOUT:-5}
       - LIMBO_ADMIN_LOCK=${LIMBO_ADMIN_LOCK:-/tmp/replication.pid}
       - LIMBO_ADMIN_REPL_SCRIPT=${LIMBO_ADMIN_REPL_SCRIPT:-/usr/local/bin/replication.sh}
