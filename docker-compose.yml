@@ -1,4 +1,4 @@
-#   Limbo 1.9.320.500
+#   Limbo 1.9.321.637
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -28,6 +28,7 @@ services:
     pull_policy: always
     environment:
       - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.321.637
     volumes:
       - ./:/out
     restart: "no"
@@ -49,6 +50,44 @@ services:
     scale: ${LIMBO_SLSKD_SCALE:-1}
     env_file:
       - ./.env
+    restart: "no"
+    depends_on:
+      <<: *assets_depends
+
+  limbo-key-init:
+    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
+    pull_policy: always
+    entrypoint: ["/bin/sh", "-lc"]
+    command:
+      - |
+        python3 - <<'PY'
+        import os
+        import secrets
+        from pathlib import Path
+        from lidarrmetadata.services import secret_store
+
+        state_dir = Path(os.getenv("LIMBO_INIT_STATE_DIR", "/metadata/init-state"))
+        state_dir.mkdir(parents=True, exist_ok=True)
+
+        key = str(secret_store.get_secret("limbo.apikey") or "").strip()
+        created = False
+        if not key:
+            key = secrets.token_hex(16)
+            secret_store.set_secret("limbo.apikey", key)
+            created = True
+
+        key_file = state_dir / "limbo_apikey.txt"
+        try:
+            current = key_file.read_text(encoding="utf-8").strip()
+        except Exception:
+            current = ""
+        if key and current != key:
+            key_file.write_text(key + "\n", encoding="utf-8")
+
+        print("limbo-key-init:", "created" if created else "exists")
+        PY
+    volumes:
+      - limbo_bridge_init_state:/metadata/init-state
     restart: "no"
     depends_on:
       <<: *assets_depends
@@ -277,6 +316,8 @@ services:
       <<: *assets_depends
       preflight:
         condition: service_completed_successfully
+      limbo-key-init:
+        condition: service_completed_successfully
       db:
         condition: service_started
       mq:
@@ -457,6 +498,8 @@ services:
     depends_on:
       <<: *assets_depends
       limbo-init:
+        condition: service_completed_successfully
+      limbo-key-init:
         condition: service_completed_successfully
       db:
         condition: service_started
