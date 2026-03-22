@@ -121,8 +121,8 @@ docker compose logs -f --no-log-prefix --tail=200 \
 
 ## Updates
 
-The `.env` file is user-maintained and won't be changed when updating. Updating will refresh all other managed files (admin scripts,
-compose template, and defaults, including _example.env_) automatically.
+The `.env` file is user-maintained and won't be changed when updating. Updating will refresh all other managed files automatically: admin scripts,
+compose template, and defaults, including _example.env._
 
 ### Regular update
 
@@ -140,7 +140,7 @@ Pull the latest images and restart two times:
 ```
 docker compose pull
 docker compose up -d
-docker compose down
+(docker compose down) - optional
 docker compose up -d
 ```
 
@@ -150,22 +150,18 @@ You should also look in the _`example.env`_ file for updates that may need to be
 
 **WORK IN PROGRESS**
 
-Verify a successful Limbo installation and check versions by opening the Limbo URL in your browser: **http://<your_LIMBO_IP>:5001**
+Go to **http://<your_LIMBO_IP>:5001**
 
 _**Use the SETTINGS button on the top right of the webUI to configure your Lidarr IP address, port and API KEY. The API Key can be found in Lidarr's Settings -> General page.**_
 
 ## Notes
 
-- _The first MusicBrainz import and database setup will take multiple hours and requires up to 300GB of available storage_
-- Building Materialized/denormalized tables consumes additional storage but offers significant performance improvements
-- 60GB of pre-built search indexes are downloaded to save a significant amount of time building new indexes
 - _Continued (scheduled) replication and indexing is required to keep the database up-to-date and at optimal performance_
-- This stack is configured for private use on a LAN, behind a firewall
-- _Don't expose services publicly without hardening_
+- This stack is configured for private use on a LAN, behind a firewall, **IT'S NOT SECURED FOR THE OPEN INTERNET**
 
 > [!NOTE]
 >
-> Limbo is for personal use only: **NO COMMERCIAL OR BUSINESS USE IS PERMITTED**
+> Limbo is for personal use only
 
 ### Source code, licenses and development repo:
 
@@ -173,7 +169,9 @@ https://github.com/HVR88/DEV_Limbo-Stack
 
 ## Maintenance (optional)
 
-These helper scripts are synced into `admin/` automatically when the stack starts or updates:
+Keep database scheduled tasks and mainenance options enabled in Limbo Settings.
+
+Additional helper scripts are synced into `admin/` automatically when the stack starts or updates:
 
 - `admin/status` (show container status)
 - `admin/logs [services...]` (follow logs)
