@@ -1,4 +1,4 @@
-#   Limbo 1.9.321.637
+#   Limbo 1.9.322.652
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -28,7 +28,7 @@ services:
     pull_policy: always
     environment:
       - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.321.637
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.322.652
     volumes:
       - ./:/out
     restart: "no"
@@ -43,6 +43,25 @@ services:
     restart: "no"
     depends_on:
       <<: *assets_depends
+      host-ip-preflight:
+        condition: service_completed_successfully
+
+  host-ip-preflight:
+    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
+    entrypoint: ["/bin/sh", "/opt/limbo-preflight/host-ip.sh"]
+    network_mode: host
+    env_file:
+      - ./.env
+    volumes:
+      - ./.env:/run/limbo.env:ro
+      - type: bind
+        source: ./admin/.limbo/runtime
+        target: /run/limbo-runtime
+        bind:
+          create_host_path: true
+    restart: "no"
+    depends_on:
+      <<: *assets_depends
 
   slskd-preflight:
     image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
@@ -53,6 +72,8 @@ services:
     restart: "no"
     depends_on:
       <<: *assets_depends
+      host-ip-preflight:
+        condition: service_completed_successfully
 
   limbo-key-init:
     image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
@@ -405,6 +426,18 @@ services:
       - ./admin/.limbo/assets/LIMBO_TAG_VERSION:/limbo/VERSION:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - type: bind
+        source: ./admin/.limbo/runtime
+        target: /run/limbo-runtime
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ./admin
+        target: /limbo/admin
+        read_only: true
+        bind:
+          create_host_path: true
+      - type: bind
         source: ${LIMBO_LIDARR_ROOT_FOLDER_1:-${LIMBO_SLSKD_PARENT_MOUNT}}
         target: /limbo/lidarr-root-1
         bind:
@@ -474,6 +507,12 @@ services:
       LIMBO_IMAGE_CACHE_CLEANUP_ENABLED: "${LIMBO_IMAGE_CACHE_CLEANUP_ENABLED:-true}"
       LIMBO_IMAGE_CACHE_CLEANUP_INTERVAL_SECONDS: "${LIMBO_IMAGE_CACHE_CLEANUP_INTERVAL_SECONDS:-3600}"
       LIMBO_IMAGE_CACHE_CLEANUP_STARTUP_DELAY_SECONDS: "${LIMBO_IMAGE_CACHE_CLEANUP_STARTUP_DELAY_SECONDS:-120}"
+      LIMBO_LIDARR_LIBRARY_TOOL_ENABLED: "${LIMBO_LIDARR_LIBRARY_TOOL_ENABLED:-false}"
+      LIMBO_LIDARR_LIBRARY_TOOL_DB_PATH: "${LIMBO_LIDARR_LIBRARY_TOOL_DB_PATH:-/metadata/init-state/lidarr-library-tool.db}"
+      LIMBO_LIDARR_LIBRARY_TOOL_SYNC_INTERVAL_SECONDS: "${LIMBO_LIDARR_LIBRARY_TOOL_SYNC_INTERVAL_SECONDS:-1800}"
+      LIMBO_LIDARR_LIBRARY_TOOL_STARTUP_DELAY_SECONDS: "${LIMBO_LIDARR_LIBRARY_TOOL_STARTUP_DELAY_SECONDS:-45}"
+      LIMBO_LIDARR_LIBRARY_TOOL_HTTP_TIMEOUT_SECONDS: "${LIMBO_LIDARR_LIBRARY_TOOL_HTTP_TIMEOUT_SECONDS:-120}"
+      LIMBO_LIDARR_LIBRARY_TOOL_BACKFILL_DEBOUNCE_SECONDS: "${LIMBO_LIDARR_LIBRARY_TOOL_BACKFILL_DEBOUNCE_SECONDS:-0.25}"
 
       # --- Redis ---
       REDIS_HOST: "${REDIS_HOST:-redis}"
@@ -497,6 +536,8 @@ services:
     restart: unless-stopped
     depends_on:
       <<: *assets_depends
+      host-ip-preflight:
+        condition: service_completed_successfully
       limbo-init:
         condition: service_completed_successfully
       limbo-key-init:
