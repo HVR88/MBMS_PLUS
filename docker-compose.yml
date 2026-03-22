@@ -1,4 +1,4 @@
-#   Limbo 1.9.322.652
+#   Limbo 1.9.322.670
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -28,7 +28,7 @@ services:
     pull_policy: always
     environment:
       - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.322.652
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.322.670
     volumes:
       - ./:/out
     restart: "no"
@@ -363,6 +363,8 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
+    volumes:
+      - dbdump:/media/dbdump
     depends_on:
       <<: *assets_depends
       db:
@@ -384,7 +386,7 @@ services:
       - MUSICBRAINZ_INDEXING_FREQUENCY=${MUSICBRAINZ_INDEXING_FREQUENCY:-weekly}
       - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
     volumes:
-      - dbdump:/media/dbdump:ro
+      - dbdump:/media/dbdump
     command: ["/usr/local/bin/indexer-cron.sh"]
     restart: unless-stopped
     depends_on:
@@ -423,6 +425,7 @@ services:
       - "${LIMBO_PORT:-5001}:5001"
     volumes:
       - limbo_bridge_init_state:/metadata/init-state
+      - dbdump:/media/dbdump:ro
       - ./admin/.limbo/assets/LIMBO_TAG_VERSION:/limbo/VERSION:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - type: bind
