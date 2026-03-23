@@ -1,4 +1,4 @@
-#   Limbo 1.9.322.677
+#   Limbo 1.9.323.678
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -28,7 +28,7 @@ services:
     pull_policy: always
     environment:
       - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.322.677
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.323.678
     volumes:
       - ./:/out
     restart: "no"
@@ -475,6 +475,15 @@ services:
       LIDARR_METADATA_CONFIG: "${LIDARR_METADATA_CONFIG:-BRIDGE}"
       LIMBO_APIKEY: "${LIMBO_APIKEY:-}"
       USE_CACHE: "${USE_CACHE:-true}"
+      LIMBO_SEARCH_CONCURRENCY: "${LIMBO_SEARCH_CONCURRENCY:-4}"
+      LIMBO_MBDB_POOL_MIN: "${LIMBO_MBDB_POOL_MIN:-1}"
+      LIMBO_MBDB_POOL_MAX: "${LIMBO_MBDB_POOL_MAX:-8}"
+      LIMBO_CACHE_POOL_MIN: "${LIMBO_CACHE_POOL_MIN:-1}"
+      LIMBO_CACHE_POOL_MAX: "${LIMBO_CACHE_POOL_MAX:-4}"
+      LIMBO_PROVIDER_ID_POOL_MIN: "${LIMBO_PROVIDER_ID_POOL_MIN:-1}"
+      LIMBO_PROVIDER_ID_POOL_MAX: "${LIMBO_PROVIDER_ID_POOL_MAX:-4}"
+      LIMBO_DB_HOOK_POOL_MIN: "${LIMBO_DB_HOOK_POOL_MIN:-1}"
+      LIMBO_DB_HOOK_POOL_MAX: "${LIMBO_DB_HOOK_POOL_MAX:-4}"
       ENABLE_STATS: "${ENABLE_STATS:-false}"
       ROOT_PATH: "${ROOT_PATH:-}"
       LIMBO_VERSION_FILE: "/limbo/VERSION"

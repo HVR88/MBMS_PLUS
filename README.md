@@ -163,10 +163,6 @@ _**Use the SETTINGS button on the top right of the webUI to configure your Lidar
 >
 > Limbo is for personal use only
 
-### Source code, licenses and development repo:
-
-https://github.com/HVR88/DEV_Limbo-Stack
-
 ## Maintenance (optional)
 
 Keep database scheduled tasks and mainenance options enabled in Limbo Settings.
