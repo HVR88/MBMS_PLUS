@@ -1,4 +1,4 @@
-#   Limbo 1.9.323.686
+#   Limbo 1.9.323.687
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -28,7 +28,7 @@ services:
     pull_policy: always
     environment:
       - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.323.686
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.323.687
     volumes:
       - ./:/out
     restart: "no"
