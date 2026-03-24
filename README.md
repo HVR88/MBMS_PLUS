@@ -6,13 +6,13 @@
 
 ## Introduction
 
-Limbo is a multi-purpose tool and download manager for Lidarr. It contains a full MusicBrainz mirror server with fast, easy and automated installation. No plugins or settings need to be changed in Lidarr.
+Limbo is a multi-purpose tool and download manager, currently supporting the Lidarr front end. It contains a full MusicBrainz mirror server with fast, easy and automated installation. No plugins or settings need to be changed in Lidarr to use Limbo.
 
-Limbo packages the Lidarr Metadata API and bridges queries to the mirror database directly, providing local access to all metadata. No online Lidarr databases, "cache-warming" or other nonsense. Just fast LAN-based performance.
+Limbo is based on the Lidarr Metadata API, coupled with customized MusicBrainz database integration, external metadata provider system, external music streamer user-account system, streaming provider-bed lookup service, image processing, downloader integration and other features.
 
 _You say that you don't want vinyl formats in releases? No problem, filter that out._
 
-From the Limbo WebUI, you can filter/modify media formats for all releases, set up additional data providers (not normally supported by Lidarr) and fix artwork downloading for those it already supports.
+From the Limbo web interface, you can filter/modify media formats for all releases, track multiple versions of the same album in Lidarr, set up additional data providers, inclduing login-less and free options, and more.
 
 **Currently implemented features:**
 
@@ -124,6 +124,14 @@ docker compose logs -f --no-log-prefix --tail=200 \
 The `.env` file is user-maintained and won't be changed when updating. Updating will refresh all other managed files automatically: admin scripts,
 compose template, and defaults, including _example.env._
 
+Deploy source-of-truth files in this repo now live at root:
+
+- `docker-compose.yml`
+- `example.env`
+- `README.md`
+
+Deploy helper scripts for the target `admin/` folder are maintained under `deploy-admin/` in this repo and are synced to `admin/` at deploy/runtime.
+
 ### Regular update
 
 Pull the latest images and restart:
@@ -177,3 +185,4 @@ Additional helper scripts are synced into `admin/` automatically when the stack 
 - `admin/soulseek-auth-set --rotate [--json]` (roll and apply a generated Soulseek username/password)
 - `admin/soulseek-auth-set --username <name> [--password <pass>] [--json]` (pre-validates Soulseek login before apply; returns error instead of rotating on failure)
 - `admin/bootstrap-reset` (clear bootstrap markers; prompts for confirmation)
+- `admin/retire-limbo-bridge [--apply] [--prune-images]` (migrate deprecated `limbo-bridge` image references to canonical `limbo`, with stale-container cleanup)

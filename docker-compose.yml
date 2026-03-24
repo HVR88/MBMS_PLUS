@@ -1,4 +1,4 @@
-#   Limbo 1.9.323.693
+#   Limbo 1.9.323.700
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -28,13 +28,13 @@ services:
     pull_policy: always
     environment:
       - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.323.693
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.323.700
     volumes:
       - ./:/out
     restart: "no"
 
   preflight:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
+    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/core-env.sh"]
     env_file:
       - ./.env
@@ -47,7 +47,7 @@ services:
         condition: service_completed_successfully
 
   host-ip-preflight:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
+    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/host-ip.sh"]
     network_mode: host
     env_file:
@@ -64,7 +64,7 @@ services:
       <<: *assets_depends
 
   slskd-preflight:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
+    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/slskd-mounts.sh"]
     scale: ${LIMBO_SLSKD_SCALE:-1}
     env_file:
@@ -76,7 +76,7 @@ services:
         condition: service_completed_successfully
 
   limbo-key-init:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
+    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
     pull_policy: always
     entrypoint: ["/bin/sh", "-lc"]
     command:
@@ -85,7 +85,7 @@ services:
         import os
         import secrets
         from pathlib import Path
-        from lidarrmetadata.services import secret_store
+        from metadata_srv.services import secret_store
 
         state_dir = Path(os.getenv("LIMBO_INIT_STATE_DIR", "/metadata/init-state"))
         state_dir.mkdir(parents=True, exist_ok=True)
@@ -397,7 +397,7 @@ services:
         condition: service_started
 
   limbo-init:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
+    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
     pull_policy: always
     entrypoint: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
     environment:
@@ -419,7 +419,7 @@ services:
         condition: service_completed_successfully
 
   limbo:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo-bridge:${LIMBO_CHANNEL:-latest}}
+    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
     pull_policy: always
     ports:
       - "${LIMBO_PORT:-5001}:5001"
