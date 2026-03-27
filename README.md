@@ -82,7 +82,7 @@ You can optionally set the following variables if you want a different top-level
 - Set **LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT**
 - Set **LIMBO_SLSKD_SHARING_MOUNT**
 
-Storage server discovery (SMB/mDNS) now uses a host-network helper by default.
+Storage server discovery and host-IP runtime derivation now use a host-network helper by default.
 These defaults are in `example.env` and normally should be left as-is:
 
 - `LIMBO_DISCOVERY_HELPER_HOST=0.0.0.0`

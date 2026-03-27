@@ -1,4 +1,4 @@
-#   Limbo 1.9.327.828
+#   Limbo 1.9.327.829
 # Description: Deploy compose file with managed assets sync
 
 x-assets-depends: &assets_depends
@@ -31,7 +31,7 @@ services:
     pull_policy: always
     environment:
       - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.327.828
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.327.829
     volumes:
       - ./:/out
     restart: "no"
@@ -46,25 +46,6 @@ services:
     restart: "no"
     depends_on:
       <<: *assets_depends
-      host-ip-preflight:
-        condition: service_completed_successfully
-
-  host-ip-preflight:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
-    entrypoint: ["/bin/sh", "/opt/limbo-preflight/host-ip.sh"]
-    network_mode: host
-    env_file:
-      - ./.env
-    volumes:
-      - ./.env:/run/limbo.env:ro
-      - type: bind
-        source: ./admin/.limbo/runtime
-        target: /run/limbo-runtime
-        bind:
-          create_host_path: true
-    restart: "no"
-    depends_on:
-      <<: *assets_depends
 
   slskd-preflight:
     image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
@@ -75,8 +56,6 @@ services:
     restart: "no"
     depends_on:
       <<: *assets_depends
-      host-ip-preflight:
-        condition: service_completed_successfully
 
   limbo-data-migrate:
     image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
@@ -478,11 +457,14 @@ services:
       LIMBO_SECRET_MASTER_KEY: "${LIMBO_SECRET_MASTER_KEY:-}"
     volumes:
       - limbo_data:/metadata/limbo_data
+      - type: bind
+        source: ./admin/.limbo/runtime
+        target: /run/limbo-runtime
+        bind:
+          create_host_path: true
     restart: unless-stopped
     depends_on:
       <<: *assets_depends
-      host-ip-preflight:
-        condition: service_completed_successfully
 
   limbo:
     image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
@@ -621,8 +603,6 @@ services:
     restart: unless-stopped
     depends_on:
       <<: *assets_depends
-      host-ip-preflight:
-        condition: service_completed_successfully
       limbo-host-helper:
         condition: service_started
       limbo-init:
