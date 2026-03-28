@@ -1,10 +1,84 @@
-#   Limbo 1.9.327.829
+#   Limbo 1.9.328.831
 # Description: Deploy compose file with managed assets sync
+#
+# THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
 
 x-assets-depends: &assets_depends
   assets:
     condition: service_completed_successfully
-
+x-dependency-items:
+  slskd_preflight_completed: &dep_slskd_preflight_completed
+    slskd-preflight:
+      condition: service_completed_successfully
+  limbo_data_migrate_completed: &dep_limbo_data_migrate_completed
+    limbo-data-migrate:
+      condition: service_completed_successfully
+  preflight_completed: &dep_preflight_completed
+    preflight:
+      condition: service_completed_successfully
+  db_started: &dep_db_started
+    db:
+      condition: service_started
+  mq_started: &dep_mq_started
+    mq:
+      condition: service_started
+  search_started: &dep_search_started
+    search:
+      condition: service_started
+  redis_started: &dep_redis_started
+    redis:
+      condition: service_started
+  bootstrap_completed: &dep_bootstrap_completed
+    bootstrap:
+      condition: service_completed_successfully
+  search_bootstrap_completed: &dep_search_bootstrap_completed
+    search-bootstrap:
+      condition: service_completed_successfully
+  limbo_host_helper_started: &dep_limbo_host_helper_started
+    limbo-host-helper:
+      condition: service_started
+  limbo_init_completed: &dep_limbo_init_completed
+    limbo-init:
+      condition: service_completed_successfully
+  limbo_key_init_completed: &dep_limbo_key_init_completed
+    limbo-key-init:
+      condition: service_completed_successfully
+x-images:
+  limbo: &image_limbo ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
+  assets: &image_assets ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-assets:${LIMBO_CHANNEL:-latest}
+  db: &image_db ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-db:${LIMBO_CHANNEL:-latest}
+  mq: &image_mq ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-mq:${LIMBO_CHANNEL:-latest}
+  slskd: &image_slskd ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-slskd:${LIMBO_CHANNEL:-latest}
+  bootstrap: &image_bootstrap ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-bootstrap:${LIMBO_CHANNEL:-latest}
+  musicbrainz: &image_musicbrainz ${MUSICBRAINZ_IMAGE:-${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-musicbrainz:${LIMBO_CHANNEL:-latest}}
+  search: &image_search ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
+  indexer: &image_indexer ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:${LIMBO_CHANNEL:-latest}
+x-env-files:
+  runtime: &env_files_runtime
+    - path: ./.env
+    - path: ./.limbo/internal.env
+      required: false
+x-default-values:
+  tz: &default_tz "${TZ:-UTC}"
+  limbo_username: &default_limbo_username "${LIMBO_USERNAME:-limbo}"
+  limbo_password: &default_limbo_password "${LIMBO_PASSWORD:-limbo}"
+  mb_db_host: &default_mb_db_host "${MB_DB_HOST:-db}"
+  mb_db_port: &default_mb_db_port "${MB_DB_PORT:-5432}"
+  mb_db_user: &default_mb_db_user "${MB_DB_USER:-musicbrainz}"
+  mb_db_password: &default_mb_db_password "${MB_DB_PASSWORD:-musicbrainz}"
+  mb_db_name: &default_mb_db_name "${MB_DB_NAME:-musicbrainz_db}"
+  limbo_cache_db: &default_limbo_cache_db "${LIMBO_CACHE_DB:-lm_cache_db}"
+  limbo_cache_user: &default_limbo_cache_user "${LIMBO_CACHE_USER:-limbo}"
+  limbo_cache_password: &default_limbo_cache_password "${LIMBO_CACHE_PASSWORD:-limbo}"
+x-default-env-items:
+  tz: &default_env_tz "TZ=${TZ:-UTC}"
+  pg_user: &default_env_pg_user "POSTGRES_USER=${MB_DB_USER:-musicbrainz}"
+  pg_password: &default_env_pg_password "POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}"
+x-env-lists:
+  pg_runtime: &env_list_pg_runtime
+    - *default_env_tz
+    - *default_env_pg_user
+    - *default_env_pg_password
 volumes:
   mqdata:
     driver: local
@@ -24,117 +98,50 @@ volumes:
     driver: local
   slskd_data:
     driver: local
-
 services:
   assets:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-assets:${LIMBO_CHANNEL:-latest}
+    image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_FORCE_SYNC=${LIMBO_ASSETS_FORCE_SYNC:-1}
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.327.829
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.328.831
     volumes:
       - ./:/out
     restart: "no"
-
   preflight:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
+    image: *image_limbo
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/core-env.sh"]
-    env_file:
-      - ./.env
+    env_file: *env_files_runtime
     volumes:
       - ./.env:/run/limbo.env:ro
     restart: "no"
-    depends_on:
-      <<: *assets_depends
-
+    depends_on: *assets_depends
   slskd-preflight:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
+    image: *image_limbo
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/slskd-mounts.sh"]
     scale: ${LIMBO_SLSKD_SCALE:-1}
-    env_file:
-      - ./.env
+    env_file: *env_files_runtime
     restart: "no"
-    depends_on:
-      <<: *assets_depends
-
+    depends_on: *assets_depends
   limbo-data-migrate:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
+    image: *image_limbo
     pull_policy: always
-    entrypoint: ["/bin/sh", "-lc"]
-    command:
-      - |
-        set -eu
-        src="/legacy-init-state"
-        dst="/metadata/limbo_data"
-        marker="$$dst/.migrated-from-limbo_bridge_init_state"
-        mkdir -p "$$src" "$$dst"
-
-        src_has_data="$$(find "$$src" -mindepth 1 -print -quit 2>/dev/null || true)"
-        dst_has_data="$$(find "$$dst" -mindepth 1 ! -name '.migrated-from-limbo_bridge_init_state' -print -quit 2>/dev/null || true)"
-
-        if [ -n "$$dst_has_data" ]; then
-          echo "limbo-data-migrate: target volume already has data; skipping copy."
-          touch "$$marker"
-          exit 0
-        fi
-        if [ -z "$$src_has_data" ]; then
-          echo "limbo-data-migrate: legacy source volume is empty or missing; nothing to copy."
-          touch "$$marker"
-          exit 0
-        fi
-
-        echo "limbo-data-migrate: copying data from limbo_bridge_init_state to limbo_data..."
-        (cd "$$src" && tar -cf - .) | (cd "$$dst" && tar -xpf -)
-        touch "$$marker"
-        echo "limbo-data-migrate: migration complete."
+    entrypoint: ["/bin/sh", "/opt/limbo-preflight/migrate-limbo-data.sh"]
     volumes:
       - limbo_bridge_init_state:/legacy-init-state:ro
       - limbo_data:/metadata/limbo_data
     restart: "no"
-    depends_on:
-      <<: *assets_depends
-
+    depends_on: *assets_depends
   limbo-key-init:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
+    image: *image_limbo
     pull_policy: always
-    entrypoint: ["/bin/sh", "-lc"]
-    command:
-      - |
-        python3 - <<'PY'
-        import os
-        import secrets
-        from pathlib import Path
-        from metadata_srv.services import secret_store
-
-        state_dir = Path(os.getenv("LIMBO_INIT_STATE_DIR", "/metadata/limbo_data"))
-        state_dir.mkdir(parents=True, exist_ok=True)
-
-        key = str(secret_store.get_secret("limbo.apikey") or "").strip()
-        created = False
-        if not key:
-            key = secrets.token_hex(16)
-            secret_store.set_secret("limbo.apikey", key)
-            created = True
-
-        key_file = state_dir / "limbo_apikey.txt"
-        try:
-            if key_file.exists():
-                key_file.unlink()
-        except Exception:
-            pass
-
-        print("limbo-key-init:", "created" if created else "exists")
-        PY
+    entrypoint: ["python3.14", "/opt/limbo-preflight/init-limbo-key.py"]
     volumes:
       - limbo_data:/metadata/limbo_data
     restart: "no"
     depends_on:
-      <<: *assets_depends
-      limbo-data-migrate:
-        condition: service_completed_successfully
-
+      <<: [*assets_depends, *dep_limbo_data_migrate_completed]
   db:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-db:${LIMBO_CHANNEL:-latest}
+    image: *image_db
     logging:
       driver: "json-file"
       options:
@@ -142,20 +149,15 @@ services:
         max-file: "10"
     restart: unless-stopped
     command: postgres -c "shared_buffers=${POSTGRES_SHARED_BUFFERS:-4GB}" -c "shared_preload_libraries=pg_amqp.so"
-    environment:
-      - TZ=${TZ:-UTC}
-      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
-      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
+    environment: *env_list_pg_runtime
     shm_size: "${POSTGRES_SHM_SIZE:-4GB}"
     volumes:
       - pgdata:/var/lib/postgresql/data
     expose:
       - "5432"
-    depends_on:
-      <<: *assets_depends
-
+    depends_on: *assets_depends
   mq:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-mq:${LIMBO_CHANNEL:-latest}
+    image: *image_mq
     hostname: "mq"
     logging:
       driver: "json-file"
@@ -163,7 +165,7 @@ services:
         max-size: "10m"
         max-file: "10"
     environment:
-      - TZ=${TZ:-UTC}
+      - *default_env_tz
     restart: unless-stopped
     ulimits:
       nofile: 65536
@@ -171,9 +173,7 @@ services:
       - mqdata:/var/lib/rabbitmq
     expose:
       - "5672"
-    depends_on:
-      <<: *assets_depends
-
+    depends_on: *assets_depends
   redis:
     image: redis:3-alpine
     logging:
@@ -182,15 +182,13 @@ services:
         max-size: "10m"
         max-file: "10"
     environment:
-      - TZ=${TZ:-UTC}
+      - *default_env_tz
     restart: unless-stopped
     expose:
       - "6379"
-    depends_on:
-      <<: *assets_depends
-
+    depends_on: *assets_depends
   slskd:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-slskd:${LIMBO_CHANNEL:-latest}
+    image: *image_slskd
     pull_policy: always
     scale: ${LIMBO_SLSKD_SCALE:-1}
     logging:
@@ -202,14 +200,13 @@ services:
       - "${SLSKD_WEB_SERVER_PORT:-5030}:5030"
       - "${SLSKD_HTTPS_SERVER_PORT:-5031}:5031"
       - "${SLSKD_SLSK_PORT:-50300}:50300"
+    env_file: *env_files_runtime
     environment:
-      - TZ=${TZ:-UTC}
-      - SLSKD_REMOTE_CONFIGURATION=${SLSKD_REMOTE_CONFIGURATION:-true}
-      - SLSKD_REMOTE_FILE_MANAGEMENT=${SLSKD_REMOTE_FILE_MANAGEMENT:-true}
-      - SLSKD_USERNAME=${LIMBO_USERNAME:-limbo}
-      - SLSKD_PASSWORD=${LIMBO_PASSWORD:-limbo}
-      - LIMBO_APIKEY=${LIMBO_APIKEY:-}
-      - SLSKD_API_KEY=${LIMBO_APIKEY:-}
+      TZ: *default_tz
+      SLSKD_USERNAME: *default_limbo_username
+      SLSKD_PASSWORD: *default_limbo_password
+      LIMBO_APIKEY: "${LIMBO_APIKEY:-}"
+      SLSKD_API_KEY: "${LIMBO_APIKEY:-}"
     volumes:
       - slskd_data:/app
       - limbo_data:/metadata/limbo_data
@@ -235,47 +232,28 @@ services:
           create_host_path: true
     restart: unless-stopped
     depends_on:
-      <<: *assets_depends
-      slskd-preflight:
-        condition: service_completed_successfully
-      limbo-data-migrate:
-        condition: service_completed_successfully
-
+      <<:
+        [
+          *assets_depends,
+          *dep_slskd_preflight_completed,
+          *dep_limbo_data_migrate_completed,
+        ]
   bootstrap:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-bootstrap:${LIMBO_CHANNEL:-latest}
-    environment:
-      - TZ=${TZ:-UTC}
-      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
-      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
-      - MUSICBRAINZ_BOOTSTRAP_DB=${MUSICBRAINZ_BOOTSTRAP_DB:-1}
-      - MUSICBRAINZ_BOOTSTRAP_FETCH_DUMPS=${MUSICBRAINZ_BOOTSTRAP_FETCH_DUMPS:-1}
-      - MUSICBRAINZ_BOOTSTRAP_MATERIALIZED=${MUSICBRAINZ_BOOTSTRAP_MATERIALIZED:-1}
-      - MUSICBRAINZ_BOOTSTRAP_WGET_OPTIONS=${MUSICBRAINZ_BOOTSTRAP_WGET_OPTIONS:-}
-      - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
-      - MUSICBRAINZ_BOOTSTRAP_MATERIALIZED_MARKER=${MUSICBRAINZ_BOOTSTRAP_MATERIALIZED_MARKER:-/media/dbdump/.bootstrap.materialized.done}
-      - MUSICBRAINZ_BOOTSTRAP_MARKER=${MUSICBRAINZ_BOOTSTRAP_MARKER:-/media/dbdump/.bootstrap.done}
+    image: *image_bootstrap
+    env_file: *env_files_runtime
+    environment: *env_list_pg_runtime
     volumes:
       - dbdump:/media/dbdump
     command: ["bootstrap.sh"]
     restart: "no"
     depends_on:
-      <<: *assets_depends
-      preflight:
-        condition: service_completed_successfully
-      db:
-        condition: service_started
-
+      <<: [*assets_depends, *dep_preflight_completed, *dep_db_started]
   search-bootstrap:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
+    image: *image_search
     entrypoint: ["/usr/local/bin/bootstrap-indexes.sh"]
+    env_file: *env_files_runtime
     environment:
       - TZ=${TZ:-UTC}
-      - MUSICBRAINZ_BOOTSTRAP_SEARCH_INDEXES=${MUSICBRAINZ_BOOTSTRAP_SEARCH_INDEXES:-download}
-      - MUSICBRAINZ_BOOTSTRAP_WAIT_FOR_DB=${MUSICBRAINZ_BOOTSTRAP_WAIT_FOR_DB:-1}
-      - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
-      - MUSICBRAINZ_BOOTSTRAP_SEARCH_MARKER=${MUSICBRAINZ_BOOTSTRAP_SEARCH_MARKER:-/var/cache/musicbrainz/solr-backups/.bootstrap.solr.done}
-      - MUSICBRAINZ_BOOTSTRAP_SOLR_CLEANUP=${MUSICBRAINZ_BOOTSTRAP_SOLR_CLEANUP:-0}
-      - SOLR_HEAP=${SOLR_HEAP:-4g}
     volumes:
       - solrdata:/var/solr
       - solrdump:/var/cache/musicbrainz/solr-backups
@@ -284,14 +262,9 @@ services:
       nofile: 65536
     restart: "no"
     depends_on:
-      <<: *assets_depends
-      preflight:
-        condition: service_completed_successfully
-      bootstrap:
-        condition: service_completed_successfully
-
+      <<: [*assets_depends, *dep_preflight_completed, *dep_bootstrap_completed]
   search:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
+    image: *image_search
     logging:
       driver: "json-file"
       options:
@@ -301,7 +274,7 @@ services:
       nofile: 65536
     restart: unless-stopped
     environment:
-      - TZ=${TZ:-UTC}
+      - *default_env_tz
       - SOLR_HEAP=${SOLR_HEAP:-4g}
       - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
     expose:
@@ -311,12 +284,9 @@ services:
       - solrdata:/var/solr
       - solrdump:/var/cache/musicbrainz/solr-backups
     depends_on:
-      <<: *assets_depends
-      search-bootstrap:
-        condition: service_completed_successfully
-
+      <<: [*assets_depends, *dep_search_bootstrap_completed]
   musicbrainz:
-    image: ${MUSICBRAINZ_IMAGE:-${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-musicbrainz:${LIMBO_CHANNEL:-latest}}
+    image: *image_musicbrainz
     pull_policy: ${MUSICBRAINZ_PULL_POLICY:-missing}
     logging:
       driver: "json-file"
@@ -324,65 +294,33 @@ services:
         max-size: "50m"
         max-file: "50"
     ports:
-      - "${MUSICBRAINZ_DOCKER_HOST_IPADDRCOL:-}${MUSICBRAINZ_WEB_SERVER_PORT:-4815}:4815"
+      - "${MUSICBRAINZ_DOCKER_HOST_IPADDRCOL:-}${MUSICBRAINZ_WEB_SERVER_PORT:-4815}:${MUSICBRAINZ_WEB_SERVER_PORT:-4815}"
     volumes:
       - dbdump:/media/dbdump
       - solrdump:/var/cache/musicbrainz/solr-backups:ro
       - limbo_data:/metadata/limbo_data:ro
     restart: unless-stopped
+    env_file: *env_files_runtime
     environment:
-      - TZ=${TZ:-UTC}
-      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
-      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
-      - MUSICBRAINZ_BASE_FTP_URL=${MUSICBRAINZ_BASE_FTP_URL:-}
-      - MUSICBRAINZ_BASE_DOWNLOAD_URL=${MUSICBRAINZ_BASE_DOWNLOAD_URL:-https://data.metabrainz.org/pub/musicbrainz}
-      - MUSICBRAINZ_CAA_BASE_URL=${MUSICBRAINZ_CAA_BASE_URL:-}
-      - MUSICBRAINZ_SERVER_PROCESSES=${MUSICBRAINZ_SERVER_PROCESSES:-10}
-      - MUSICBRAINZ_RUNTIME_MODE=${MUSICBRAINZ_RUNTIME_MODE:-headless}
-      - STATIC_RESOURCES_LOCATION=${STATIC_RESOURCES_LOCATION:-/static/build}
-      - MUSICBRAINZ_REPLICATION_ENABLED=${MUSICBRAINZ_REPLICATION_ENABLED:-1}
-      - MUSICBRAINZ_REPLICATION_TIME=${MUSICBRAINZ_REPLICATION_TIME:-03:00}
-      - MUSICBRAINZ_REPLICATION_SCHEDULE=${MUSICBRAINZ_REPLICATION_SCHEDULE:-}
-      - MUSICBRAINZ_REPLICATION_TOKEN=${MUSICBRAINZ_REPLICATION_TOKEN:-}
-      - LIMBO_ADMIN_ENABLED=${LIMBO_ADMIN_ENABLED:-true}
-      - LIMBO_ADMIN_HOST=${LIMBO_ADMIN_HOST:-0.0.0.0}
-      - LIMBO_ADMIN_PORT=${LIMBO_ADMIN_PORT:-8099}
-      - LIMBO_ADMIN_HEADER=${LIMBO_ADMIN_HEADER:-X-Limbo-Key}
-      - LIMBO_ADMIN_NOTIFY_URL=${LIMBO_ADMIN_NOTIFY_URL:-http://limbo:4808/replication/notify}
-      - LIMBO_ADMIN_NOTIFY_HEADER=${LIMBO_ADMIN_NOTIFY_HEADER:-X-Limbo-Key}
-      - LIMBO_ADMIN_NOTIFY_TIMEOUT=${LIMBO_ADMIN_NOTIFY_TIMEOUT:-5}
-      - LIMBO_ADMIN_SECRET_DB_FILE=${LIMBO_ADMIN_SECRET_DB_FILE:-/metadata/limbo_data/limbo-secrets.db}
-      - LIMBO_ADMIN_SECRET_MASTER_KEY_FILE=${LIMBO_ADMIN_SECRET_MASTER_KEY_FILE:-/metadata/limbo_data/limbo-secrets-master.key}
-      - LIMBO_ADMIN_LOCK=${LIMBO_ADMIN_LOCK:-/tmp/replication.pid}
-      - LIMBO_ADMIN_REPL_SCRIPT=${LIMBO_ADMIN_REPL_SCRIPT:-/usr/local/bin/replication.sh}
+      - *default_env_pg_user
+      - *default_env_pg_password
       - MUSICBRAINZ_USE_PROXY=1
-      - MUSICBRAINZ_WEB_SERVER_HOST=${MUSICBRAINZ_WEB_SERVER_HOST:-localhost}
-      - MUSICBRAINZ_WEB_SERVER_PORT=${MUSICBRAINZ_WEB_SERVER_PORT:-4815}
     depends_on:
-      <<: *assets_depends
-      preflight:
-        condition: service_completed_successfully
-      limbo-key-init:
-        condition: service_completed_successfully
-      db:
-        condition: service_started
-      mq:
-        condition: service_started
-      search:
-        condition: service_started
-      redis:
-        condition: service_started
-      bootstrap:
-        condition: service_completed_successfully
-      search-bootstrap:
-        condition: service_completed_successfully
-
+      <<:
+        [
+          *assets_depends,
+          *dep_preflight_completed,
+          *dep_limbo_key_init_completed,
+          *dep_db_started,
+          *dep_mq_started,
+          *dep_search_started,
+          *dep_redis_started,
+          *dep_bootstrap_completed,
+          *dep_search_bootstrap_completed,
+        ]
   indexer:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:${LIMBO_CHANNEL:-latest}
-    environment:
-      - TZ=${TZ:-UTC}
-      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
-      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
+    image: *image_indexer
+    environment: *env_list_pg_runtime
     logging:
       driver: "json-file"
       options:
@@ -391,71 +329,43 @@ services:
     volumes:
       - dbdump:/media/dbdump
     depends_on:
-      <<: *assets_depends
-      db:
-        condition: service_started
-      mq:
-        condition: service_started
-      search:
-        condition: service_started
-
+      <<:
+        [*assets_depends, *dep_db_started, *dep_mq_started, *dep_search_started]
   indexer-cron:
-    image: ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-indexer:${LIMBO_CHANNEL:-latest}
-    environment:
-      - TZ=${TZ:-UTC}
-      - POSTGRES_USER=${MB_DB_USER:-musicbrainz}
-      - POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}
-      - MUSICBRAINZ_INDEXING_ENABLED=${MUSICBRAINZ_INDEXING_ENABLED:-1}
-      - MUSICBRAINZ_INDEXING_TIME=${MUSICBRAINZ_INDEXING_TIME:-01:00}
-      - MUSICBRAINZ_INDEXING_DAY=${MUSICBRAINZ_INDEXING_DAY:-Sunday}
-      - MUSICBRAINZ_INDEXING_FREQUENCY=${MUSICBRAINZ_INDEXING_FREQUENCY:-weekly}
-      - MUSICBRAINZ_BOOTSTRAP_DB_MARKER=${MUSICBRAINZ_BOOTSTRAP_DB_MARKER:-/media/dbdump/.bootstrap.db.done}
+    image: *image_indexer
+    env_file: *env_files_runtime
+    environment: *env_list_pg_runtime
     volumes:
       - dbdump:/media/dbdump
     command: ["/usr/local/bin/indexer-cron.sh"]
     restart: unless-stopped
     depends_on:
-      <<: *assets_depends
-      db:
-        condition: service_started
-      search:
-        condition: service_started
-
+      <<: [*assets_depends, *dep_db_started, *dep_search_started]
   limbo-init:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
+    image: *image_limbo
     pull_policy: always
     entrypoint: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
     environment:
-      TZ: ${TZ:-UTC}
-      MB_DB_HOST: ${MB_DB_HOST:-db}
-      MB_DB_PORT: ${MB_DB_PORT:-5432}
-      MB_DB_USER: ${MB_DB_USER:-musicbrainz}
-      MB_DB_PASSWORD: ${MB_DB_PASSWORD:-musicbrainz}
-      MB_DB_NAME: ${MB_DB_NAME:-musicbrainz_db}
-      LIMBO_CACHE_DB: ${LIMBO_CACHE_DB:-lm_cache_db}
-      LIMBO_CACHE_USER: ${LIMBO_CACHE_USER:-limbo}
-      LIMBO_CACHE_PASSWORD: ${LIMBO_CACHE_PASSWORD:-limbo}
+      TZ: *default_tz
+      MB_DB_HOST: *default_mb_db_host
+      MB_DB_PORT: *default_mb_db_port
+      MB_DB_USER: *default_mb_db_user
+      MB_DB_PASSWORD: *default_mb_db_password
+      MB_DB_NAME: *default_mb_db_name
+      LIMBO_CACHE_DB: *default_limbo_cache_db
+      LIMBO_CACHE_USER: *default_limbo_cache_user
+      LIMBO_CACHE_PASSWORD: *default_limbo_cache_password
     restart: "no"
     depends_on:
-      <<: *assets_depends
-      db:
-        condition: service_started
-      bootstrap:
-        condition: service_completed_successfully
-
+      <<: [*assets_depends, *dep_db_started, *dep_bootstrap_completed]
   limbo-host-helper:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
+    image: *image_limbo
     pull_policy: always
     network_mode: host
     entrypoint: ["python3.14", "-m", "metadata_srv.storage_discovery_helper"]
-    env_file:
-      - .env
+    env_file: *env_files_runtime
     environment:
-      LIMBO_DISCOVERY_HELPER_HOST: "${LIMBO_DISCOVERY_HELPER_HOST:-0.0.0.0}"
-      LIMBO_HOST_HELPER_PORT: "${LIMBO_HOST_HELPER_PORT:-4809}"
-      LIMBO_INIT_STATE_DIR: "${LIMBO_INIT_STATE_DIR:-/metadata/limbo_data}"
-      LIMBO_SECRET_DB_FILE: "${LIMBO_SECRET_DB_FILE:-/metadata/limbo_data/limbo-secrets.db}"
-      LIMBO_SECRET_MASTER_KEY_FILE: "${LIMBO_SECRET_MASTER_KEY_FILE:-/metadata/limbo_data/limbo-secrets-master.key}"
+      LIMBO_HOST_HELPER_PORT: "4809"
       LIMBO_SECRET_MASTER_KEY: "${LIMBO_SECRET_MASTER_KEY:-}"
     volumes:
       - limbo_data:/metadata/limbo_data
@@ -465,11 +375,9 @@ services:
         bind:
           create_host_path: true
     restart: unless-stopped
-    depends_on:
-      <<: *assets_depends
-
+    depends_on: *assets_depends
   limbo:
-    image: ${LIMBO_IMAGE:-espressomatic/limbo:${LIMBO_CHANNEL:-latest}}
+    image: *image_limbo
     pull_policy: always
     cap_add:
       - SYS_ADMIN
@@ -495,125 +403,24 @@ services:
         read_only: true
         bind:
           create_host_path: true
-      - type: bind
-        source: ${LIMBO_LIDARR_ROOT_FOLDER_1:-${LIMBO_SLSKD_PARENT_MOUNT}}
-        target: /limbo/lidarr-root-1
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ${LIMBO_LIDARR_ROOT_FOLDER_2:-${LIMBO_LIDARR_ROOT_FOLDER_1:-${LIMBO_SLSKD_PARENT_MOUNT}}}
-        target: /limbo/lidarr-root-2
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ${LIMBO_LIDARR_ROOT_FOLDER_3:-${LIMBO_LIDARR_ROOT_FOLDER_2:-${LIMBO_LIDARR_ROOT_FOLDER_1:-${LIMBO_SLSKD_PARENT_MOUNT}}}}
-        target: /limbo/lidarr-root-3
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ${LIMBO_LIDARR_ROOT_FOLDER_4:-${LIMBO_LIDARR_ROOT_FOLDER_3:-${LIMBO_LIDARR_ROOT_FOLDER_2:-${LIMBO_LIDARR_ROOT_FOLDER_1:-${LIMBO_SLSKD_PARENT_MOUNT}}}}}
-        target: /limbo/lidarr-root-4
-        bind:
-          create_host_path: false
-      - type: bind
-        source: ${LIMBO_LIDARR_ROOT_FOLDER_5:-${LIMBO_LIDARR_ROOT_FOLDER_4:-${LIMBO_LIDARR_ROOT_FOLDER_3:-${LIMBO_LIDARR_ROOT_FOLDER_2:-${LIMBO_LIDARR_ROOT_FOLDER_1:-${LIMBO_SLSKD_PARENT_MOUNT}}}}}}
-        target: /limbo/lidarr-root-5
-        bind:
-          create_host_path: false
-    env_file:
-      - .env
+    env_file: *env_files_runtime
     environment:
-      TZ: ${TZ:-UTC}
-      # --- General ---
-      DEBUG: "${DEBUG:-false}"
-      PRODUCTION: "${PRODUCTION:-false}"
-      LIDARR_METADATA_CONFIG: "${LIDARR_METADATA_CONFIG:-BRIDGE}"
-      LIMBO_APIKEY: "${LIMBO_APIKEY:-}"
-      USE_CACHE: "${USE_CACHE:-true}"
-      LIMBO_SEARCH_CONCURRENCY: "${LIMBO_SEARCH_CONCURRENCY:-4}"
-      LIMBO_MBDB_POOL_MIN: "${LIMBO_MBDB_POOL_MIN:-1}"
-      LIMBO_MBDB_POOL_MAX: "${LIMBO_MBDB_POOL_MAX:-8}"
-      LIMBO_CACHE_POOL_MIN: "${LIMBO_CACHE_POOL_MIN:-1}"
-      LIMBO_CACHE_POOL_MAX: "${LIMBO_CACHE_POOL_MAX:-4}"
-      LIMBO_PROVIDER_ID_POOL_MIN: "${LIMBO_PROVIDER_ID_POOL_MIN:-1}"
-      LIMBO_PROVIDER_ID_POOL_MAX: "${LIMBO_PROVIDER_ID_POOL_MAX:-4}"
-      LIMBO_DB_HOOK_POOL_MIN: "${LIMBO_DB_HOOK_POOL_MIN:-1}"
-      LIMBO_DB_HOOK_POOL_MAX: "${LIMBO_DB_HOOK_POOL_MAX:-4}"
-      ENABLE_STATS: "${ENABLE_STATS:-false}"
-      ROOT_PATH: "${ROOT_PATH:-}"
+      TZ: *default_tz
       LIMBO_VERSION_FILE: "/limbo/VERSION"
-      LIMBO_REPLICATION_SCHEDULE: "${LIMBO_REPLICATION_SCHEDULE:-}"
-      LIMBO_INDEX_SCHEDULE: "${LIMBO_INDEX_SCHEDULE:-}"
-      MUSICBRAINZ_REPLICATION_ENABLED: "${MUSICBRAINZ_REPLICATION_ENABLED:-1}"
-      MUSICBRAINZ_REPLICATION_SCHEDULE: "${MUSICBRAINZ_REPLICATION_SCHEDULE:-}"
-      MUSICBRAINZ_REPLICATION_TIME: "${MUSICBRAINZ_REPLICATION_TIME:-03:00}"
-      MUSICBRAINZ_INDEXING_ENABLED: "${MUSICBRAINZ_INDEXING_ENABLED:-1}"
-      MUSICBRAINZ_INDEXING_SCHEDULE: "${MUSICBRAINZ_INDEXING_SCHEDULE:-}"
-      MUSICBRAINZ_INDEXING_FREQUENCY: "${MUSICBRAINZ_INDEXING_FREQUENCY:-weekly}"
-      MUSICBRAINZ_INDEXING_DAY: "${MUSICBRAINZ_INDEXING_DAY:-Sunday}"
-      MUSICBRAINZ_INDEXING_TIME: "${MUSICBRAINZ_INDEXING_TIME:-01:00}"
-      LIMBO_ART_ENGINE_ENABLED: "${LIMBO_ART_ENGINE_ENABLED:-true}"
-      LIMBO_ART_ENGINE_CACHE_ENABLED: "${LIMBO_ART_ENGINE_CACHE_ENABLED:-true}"
-      LIMBO_ART_ENGINE_CACHE_TTL_SECONDS: "${LIMBO_ART_ENGINE_CACHE_TTL_SECONDS:-}"
-      LIMBO_ARTWORK_DEBUG_ENABLED: "${LIMBO_ARTWORK_DEBUG_ENABLED:-false}"
-      LIMBO_REFRESH_VALIDATE_TIMEOUT_SECONDS: "${LIMBO_REFRESH_VALIDATE_TIMEOUT_SECONDS:-15}"
-      LIMBO_SLSKD_SHARE_REPAIR_ENABLED: "${LIMBO_SLSKD_SHARE_REPAIR_ENABLED:-true}"
-      LIMBO_SLSKD_SHARE_REPAIR_INTERVAL_SECONDS: "${LIMBO_SLSKD_SHARE_REPAIR_INTERVAL_SECONDS:-900}"
-      LIMBO_SLSKD_SHARE_REPAIR_STARTUP_DELAY_SECONDS: "${LIMBO_SLSKD_SHARE_REPAIR_STARTUP_DELAY_SECONDS:-120}"
-      LIMBO_SLSKD_SHARE_REPAIR_COOLDOWN_SECONDS: "${LIMBO_SLSKD_SHARE_REPAIR_COOLDOWN_SECONDS:-1800}"
-      LIMBO_SLSKD_SHARE_REPAIR_SET_NO_SCAN_FALSE: "${LIMBO_SLSKD_SHARE_REPAIR_SET_NO_SCAN_FALSE:-false}"
-      LIMBO_SLSKD_SHARE_REPAIR_RESTART_AFTER_APPLY: "${LIMBO_SLSKD_SHARE_REPAIR_RESTART_AFTER_APPLY:-true}"
-      LIMBO_INIT_STATE_DIR: "${LIMBO_INIT_STATE_DIR:-/metadata/limbo_data}"
-      LIMBO_SECRET_DB_FILE: "${LIMBO_SECRET_DB_FILE:-/metadata/limbo_data/limbo-secrets.db}"
-      LIMBO_SECRET_MASTER_KEY_FILE: "${LIMBO_SECRET_MASTER_KEY_FILE:-/metadata/limbo_data/limbo-secrets-master.key}"
-      LIMBO_SECRET_MASTER_KEY: "${LIMBO_SECRET_MASTER_KEY:-}"
-      LIMBO_IMAGE_STORE_DIR: "${LIMBO_IMAGE_STORE_DIR:-/metadata/images}"
-      LIMBO_IMAGE_DOWNLOAD_MAX_BYTES: "${LIMBO_IMAGE_DOWNLOAD_MAX_BYTES:-10485760}"
-      LIMBO_IMAGE_DOWNLOAD_TIMEOUT_SECONDS: "${LIMBO_IMAGE_DOWNLOAD_TIMEOUT_SECONDS:-12}"
-      LIMBO_IMAGE_CACHE_TTL_DAYS: "${LIMBO_IMAGE_CACHE_TTL_DAYS:-30}"
-      LIMBO_IMAGE_CACHE_MAX_BYTES: "${LIMBO_IMAGE_CACHE_MAX_BYTES:-2147483648}"
-      LIMBO_IMAGE_CACHE_CLEANUP_ENABLED: "${LIMBO_IMAGE_CACHE_CLEANUP_ENABLED:-true}"
-      LIMBO_IMAGE_CACHE_CLEANUP_INTERVAL_SECONDS: "${LIMBO_IMAGE_CACHE_CLEANUP_INTERVAL_SECONDS:-3600}"
-      LIMBO_IMAGE_CACHE_CLEANUP_STARTUP_DELAY_SECONDS: "${LIMBO_IMAGE_CACHE_CLEANUP_STARTUP_DELAY_SECONDS:-120}"
-      LIMBO_LIDARR_LIBRARY_TOOL_ENABLED: "${LIMBO_LIDARR_LIBRARY_TOOL_ENABLED:-false}"
-      LIMBO_LIDARR_LIBRARY_TOOL_DB_PATH: "${LIMBO_LIDARR_LIBRARY_TOOL_DB_PATH:-/metadata/limbo_data/lidarr-library-tool.db}"
-      LIMBO_LIDARR_LIBRARY_TOOL_SYNC_INTERVAL_SECONDS: "${LIMBO_LIDARR_LIBRARY_TOOL_SYNC_INTERVAL_SECONDS:-1800}"
-      LIMBO_LIDARR_LIBRARY_TOOL_STARTUP_DELAY_SECONDS: "${LIMBO_LIDARR_LIBRARY_TOOL_STARTUP_DELAY_SECONDS:-45}"
-      LIMBO_LIDARR_LIBRARY_TOOL_HTTP_TIMEOUT_SECONDS: "${LIMBO_LIDARR_LIBRARY_TOOL_HTTP_TIMEOUT_SECONDS:-120}"
-      LIMBO_LIDARR_LIBRARY_TOOL_BACKFILL_DEBOUNCE_SECONDS: "${LIMBO_LIDARR_LIBRARY_TOOL_BACKFILL_DEBOUNCE_SECONDS:-0.25}"
-      LIMBO_STORAGE_DISCOVERY_HELPER_URL: "${LIMBO_STORAGE_DISCOVERY_HELPER_URL:-http://host.docker.internal:4809}"
-
-      # --- Redis ---
-      REDIS_HOST: "${REDIS_HOST:-redis}"
-      REDIS_PORT: "${REDIS_PORT:-6379}"
-
-      # --- Solr mirror ---
-      PROVIDERS__SOLRSEARCHPROVIDER__1__SEARCH_SERVER: "${SOLR_URL:-http://search:8983/solr}"
-
       # --- MusicBrainz DB creds (set these to match your mirror) ---
-      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_HOST: "${MB_DB_HOST:-db}"
-      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_PORT: "${MB_DB_PORT:-5432}"
-      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_USER: "${MB_DB_USER:-musicbrainz}"
-      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_PASSWORD: "${MB_DB_PASSWORD:-musicbrainz}"
-
-      # --- Postgres cache (lm_cache_db) ---
-      POSTGRES_CACHE_HOST: "${LIMBO_CACHE_HOST:-db}"
-      POSTGRES_CACHE_PORT: "${LIMBO_CACHE_PORT:-5432}"
-      POSTGRES_CACHE_USER: "${LIMBO_CACHE_USER:-limbo}"
-      POSTGRES_CACHE_PASSWORD: "${LIMBO_CACHE_PASSWORD:-limbo}"
-
+      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_HOST: *default_mb_db_host
+      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_PORT: *default_mb_db_port
+      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_USER: *default_mb_db_user
+      PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_PASSWORD: *default_mb_db_password
     restart: unless-stopped
     depends_on:
-      <<: *assets_depends
-      limbo-host-helper:
-        condition: service_started
-      limbo-init:
-        condition: service_completed_successfully
-      limbo-key-init:
-        condition: service_completed_successfully
-      db:
-        condition: service_started
-      search:
-        condition: service_started
-      redis:
-        condition: service_started
+      <<:
+        [
+          *assets_depends,
+          *dep_limbo_host_helper_started,
+          *dep_limbo_init_completed,
+          *dep_limbo_key_init_completed,
+          *dep_db_started,
+          *dep_search_started,
+          *dep_redis_started,
+        ]
