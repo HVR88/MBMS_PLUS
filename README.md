@@ -20,9 +20,14 @@ From the Limbo web interface, you can filter/modify media formats for all releas
 - Release filtering (block specific media formats: vinyl, tape, etc.)
 - Release / Artist refreshing (paste URL/ID single/bulk and refrecs albums/artists)
 - Artist Photos, Cover Art + Data providers selection, with drag & drop priority
-- One-shot bulk artwork search with direct Lidarr DB access (partial)
-- Lidarr task/process control (partial - API (carrot) and direct (stick))
-- Automated / Manual Download Manager (partial - slskd)
+
+**Features in testing:**
+
+- Automated / Manual Downloads - built-in downloader or use your own external client (SLSKD)
+- Release/Album splitting - manage and download original and Deluxe, Anniversary (etc.) releases
+- Lidarr control API - start/stop/restart/update Lidarr, cancel/schedule tasks, clean/delete plugins
+- One-shot bulk artwork search with direct Lidarr installation
+- CSV / JSON Lidarr data export and custom reporting
 
 Other features are currently in development or testing. Update notifications are displayed at the bottom of the Limbo WebUI.
 
@@ -70,25 +75,6 @@ Next configure these minimum variables in the .env file:
 
 - Set **`MUSICBRAINZ_REPLICATION_TOKEN`** (get from https://metabrainz.org/profile)
 
-- Set **LIMBO_SLSKD_PARENT_MOUNT** (must point at a real mount)
-  - example: /mnt/MY_SMB_NAS_SHARE
-
-_Download features will be unavailable without this variable set._
-The path is available in slskd as "/music" and slskd's share folder is set as "/music/shared_files" by default. You can change this in the webUI to any other folder under "/music" to point to the music files you want to share
-
-You can optionally set the following variables if you want a different top-level for your download or share folders. Otherwise, you can set them under /music in the webUI:
-
-- Set **LIMBO_SLSKD_DOWNLOADS_MOUNT**
-- Set **LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT**
-- Set **LIMBO_SLSKD_SHARING_MOUNT**
-
-Storage server discovery and host-IP runtime derivation now use a host-network helper by default.
-These defaults are in `example.env` and normally should be left as-is:
-
-- `LIMBO_DISCOVERY_HELPER_HOST=0.0.0.0`
-- `LIMBO_HOST_HELPER_PORT=4809`
-- `LIMBO_STORAGE_DISCOVERY_HELPER_URL=http://host.docker.internal:4809`
-
 > [!TIP]
 >
 > When deploying from a terminal, use _screen_ or _tmux_ so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
@@ -117,22 +103,20 @@ Or with less "noise:"
 
 ```
 docker compose logs -f --no-log-prefix --tail=200 \
-  bootstrap search-bootstrap search musicbrainz indexer indexer-cron limbo slskd
+  bootstrap search-bootstrap search musicbrainz indexer indexer-cron limbo
 
 ```
 
-## Browser Access / Status
+## Browser Access
 
 **Limbo** web UI: **http://HOST_IP:4808**
 
-**SLSKD** web UI: **http://HOST_IP:5030** (HTTPS: `5031`)
-
-**MusicBrainz** local web site: **http://HOST_IP:4815**
-<br>(Off by default, enable it in Limbo Provider Settings)
+**MusicBrainz** local web site: **http://HOST_IP:4820**
+<br>(Off by default, enable it in Limbo General Settings)
 
 > [!TIP]
 >
-> Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own (sub)domains to reach Limbo, slskd and MusicBrainz LOCALLY on port 80 (HTTP) or 443 (HTTPS) (requries a unique host name per service, like limbo.yourdomain.net, slskd.yourdomain.net and mbrainz.yourdomain.net)
+> Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own (sub)domains to reach Limbo and MusicBrainz locally on port 80 (HTTP) or 443 (HTTPS) (requries a unique host name per service, like limbo.yourdomain.net and mbrainz.yourdomain.net)
 
 ## Updates
 
