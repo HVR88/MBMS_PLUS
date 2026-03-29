@@ -1,7 +1,9 @@
-#   Limbo 1.9.329.851
+#   Limbo 1.9.329.852
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
+
+name: ${COMPOSE_PROJECT_NAME:-limbo}
 
 x-assets-depends: &assets_depends
   assets:
@@ -74,11 +76,17 @@ x-default-env-items:
   tz: &default_env_tz "TZ=${TZ:-UTC}"
   pg_user: &default_env_pg_user "POSTGRES_USER=${MB_DB_USER:-musicbrainz}"
   pg_password: &default_env_pg_password "POSTGRES_PASSWORD=${MB_DB_PASSWORD:-musicbrainz}"
+  pg_port: &default_env_pg_port "PGPORT=${MB_DB_PORT:-5432}"
+  postgres_port: &default_env_postgres_port "POSTGRES_PORT=${MB_DB_PORT:-5432}"
+  db_port: &default_env_db_port "DB_PORT=${MB_DB_PORT:-5432}"
 x-env-lists:
   pg_runtime: &env_list_pg_runtime
     - *default_env_tz
     - *default_env_pg_user
     - *default_env_pg_password
+    - *default_env_pg_port
+    - *default_env_postgres_port
+    - *default_env_db_port
 volumes:
   mqdata:
     driver: local
@@ -103,7 +111,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.329.851
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.329.852
     volumes:
       - ./:/out
     restart: "no"
@@ -148,13 +156,13 @@ services:
         max-size: "10m"
         max-file: "10"
     restart: unless-stopped
-    command: postgres -c "shared_buffers=${POSTGRES_SHARED_BUFFERS:-4GB}" -c "shared_preload_libraries=pg_amqp.so"
+    command: postgres -c "port=${MB_DB_PORT:-5432}" -c "shared_buffers=${POSTGRES_SHARED_BUFFERS:-4GB}" -c "shared_preload_libraries=pg_amqp.so"
     environment: *env_list_pg_runtime
     shm_size: "${POSTGRES_SHM_SIZE:-4GB}"
     volumes:
       - pgdata:/var/lib/postgresql/data
     expose:
-      - "5432"
+      - "${MB_DB_PORT:-5432}"
     depends_on: *assets_depends
   mq:
     image: *image_mq
@@ -183,9 +191,10 @@ services:
         max-file: "10"
     environment:
       - *default_env_tz
+    command: ["redis-server", "--port", "${REDIS_PORT:-6379}"]
     restart: unless-stopped
     expose:
-      - "6379"
+      - "${REDIS_PORT:-6379}"
     depends_on: *assets_depends
   slskd:
     image: *image_slskd
@@ -211,22 +220,22 @@ services:
       - slskd_data:/app
       - limbo_data:/metadata/limbo_data
       - type: bind
-        source: ${LIMBO_SLSKD_PARENT_MOUNT}
+        source: ${LIMBO_DLDR_PARENT_FOLDER}
         target: /music
         bind:
           create_host_path: true
       - type: bind
-        source: ${LIMBO_SLSKD_SHARING_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT}/shared_files}
+        source: ${LIMBO_DLDR_SHARING_PATH:-${LIMBO_DLDR_PARENT_FOLDER}/shared_files}
         target: /shared_files
         bind:
           create_host_path: true
       - type: bind
-        source: ${LIMBO_SLSKD_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT}/slskd_downloads}
+        source: ${LIMBO_DLDR_DOWNLOADS:-${LIMBO_DLDR_PARENT_FOLDER}/slskd_downloads}
         target: /downloads
         bind:
           create_host_path: true
       - type: bind
-        source: ${LIMBO_SLSKD_INCOMPLETE_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_DOWNLOADS_MOUNT:-${LIMBO_SLSKD_PARENT_MOUNT}/slskd_downloads}/slskd_incomplete}
+        source: ${LIMBO_DLDR_INCOMPLETE_DOWNLOADS:-${LIMBO_DLDR_DOWNLOADS:-${LIMBO_DLDR_PARENT_FOLDER}/slskd_downloads}/slskd_incomplete}
         target: /incomplete
         bind:
           create_host_path: true
@@ -365,7 +374,7 @@ services:
     entrypoint: ["python3.14", "-m", "metadata_srv.storage_discovery_helper"]
     env_file: *env_files_runtime
     environment:
-      LIMBO_HOST_HELPER_PORT: "4809"
+      LIMBO_HOST_HELPER_PORT: "${LIMBO_HOST_HELPER_PORT:-4809}"
       LIMBO_SECRET_MASTER_KEY: "${LIMBO_SECRET_MASTER_KEY:-}"
     volumes:
       - limbo_data:/metadata/limbo_data
@@ -406,6 +415,9 @@ services:
     env_file: *env_files_runtime
     environment:
       TZ: *default_tz
+      REDIS_PORT: "${REDIS_PORT:-6379}"
+      POSTGRES_CACHE_HOST: *default_mb_db_host
+      POSTGRES_CACHE_PORT: *default_mb_db_port
       LIMBO_VERSION_FILE: "/limbo/VERSION"
       # --- MusicBrainz DB creds (set these to match your mirror) ---
       PROVIDERS__MUSICBRAINZDBPROVIDER__1__DB_HOST: *default_mb_db_host
