@@ -1,4 +1,4 @@
-#   Limbo 1.9.329.852
+#   Limbo 1.9.329.853
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -9,9 +9,6 @@ x-assets-depends: &assets_depends
   assets:
     condition: service_completed_successfully
 x-dependency-items:
-  slskd_preflight_completed: &dep_slskd_preflight_completed
-    slskd-preflight:
-      condition: service_completed_successfully
   limbo_data_migrate_completed: &dep_limbo_data_migrate_completed
     limbo-data-migrate:
       condition: service_completed_successfully
@@ -50,7 +47,6 @@ x-images:
   assets: &image_assets ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-assets:${LIMBO_CHANNEL:-latest}
   db: &image_db ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-db:${LIMBO_CHANNEL:-latest}
   mq: &image_mq ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-mq:${LIMBO_CHANNEL:-latest}
-  slskd: &image_slskd ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-slskd:${LIMBO_CHANNEL:-latest}
   bootstrap: &image_bootstrap ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-bootstrap:${LIMBO_CHANNEL:-latest}
   musicbrainz: &image_musicbrainz ${MUSICBRAINZ_IMAGE:-${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-musicbrainz:${LIMBO_CHANNEL:-latest}}
   search: &image_search ${LIMBO_DOCKERHUB_NAMESPACE:-espressomatic}/${LIMBO_DOCKERHUB_REPO_PREFIX:-limbo}-search:${LIMBO_CHANNEL:-latest}
@@ -104,14 +100,12 @@ volumes:
   limbo_bridge_init_state:
     name: limbo_bridge_init_state
     driver: local
-  slskd_data:
-    driver: local
 services:
   assets:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.329.852
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.329.853
     volumes:
       - ./:/out
     restart: "no"
@@ -121,13 +115,6 @@ services:
     env_file: *env_files_runtime
     volumes:
       - ./.env:/run/limbo.env:ro
-    restart: "no"
-    depends_on: *assets_depends
-  slskd-preflight:
-    image: *image_limbo
-    entrypoint: ["/bin/sh", "/opt/limbo-preflight/slskd-mounts.sh"]
-    scale: ${LIMBO_SLSKD_SCALE:-1}
-    env_file: *env_files_runtime
     restart: "no"
     depends_on: *assets_depends
   limbo-data-migrate:
@@ -196,57 +183,6 @@ services:
     expose:
       - "${REDIS_PORT:-6379}"
     depends_on: *assets_depends
-  slskd:
-    image: *image_slskd
-    pull_policy: always
-    scale: ${LIMBO_SLSKD_SCALE:-1}
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "10"
-    ports:
-      - "${SLSKD_WEB_SERVER_PORT:-5030}:5030"
-      - "${SLSKD_HTTPS_SERVER_PORT:-5031}:5031"
-      - "${SOULSEEK_INBOUND_PORT:-50300}:50300"
-    env_file: *env_files_runtime
-    environment:
-      TZ: *default_tz
-      SLSKD_USERNAME: *default_limbo_username
-      SLSKD_PASSWORD: *default_limbo_password
-      LIMBO_APIKEY: "${LIMBO_APIKEY:-}"
-      SLSKD_API_KEY: "${LIMBO_APIKEY:-}"
-    volumes:
-      - slskd_data:/app
-      - limbo_data:/metadata/limbo_data
-      - type: bind
-        source: ${LIMBO_DLDR_PARENT_FOLDER}
-        target: /music
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${LIMBO_DLDR_SHARING_PATH:-${LIMBO_DLDR_PARENT_FOLDER}/shared_files}
-        target: /shared_files
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${LIMBO_DLDR_DOWNLOADS:-${LIMBO_DLDR_PARENT_FOLDER}/slskd_downloads}
-        target: /downloads
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${LIMBO_DLDR_INCOMPLETE_DOWNLOADS:-${LIMBO_DLDR_DOWNLOADS:-${LIMBO_DLDR_PARENT_FOLDER}/slskd_downloads}/slskd_incomplete}
-        target: /incomplete
-        bind:
-          create_host_path: true
-    restart: unless-stopped
-    depends_on:
-      <<:
-        [
-          *assets_depends,
-          *dep_slskd_preflight_completed,
-          *dep_limbo_data_migrate_completed,
-        ]
   bootstrap:
     image: *image_bootstrap
     env_file: *env_files_runtime
