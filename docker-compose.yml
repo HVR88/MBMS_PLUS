@@ -1,4 +1,4 @@
-#   Limbo 1.9.329.863
+#   Limbo 1.9.329.864
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -108,7 +108,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.329.863
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.329.864
     volumes:
       - ./:/out
     restart: "no"
@@ -257,12 +257,19 @@ services:
       - solrdump:/var/cache/musicbrainz/solr-backups:ro
       - limbo_data:/metadata/limbo_data:ro
       - limbo_data:/opt/limbo-admin:ro
+      - type: bind
+        source: ./admin/.limbo/runtime
+        target: /run/limbo-runtime
+        read_only: true
+        bind:
+          create_host_path: true
     restart: unless-stopped
     env_file: *env_files_runtime
     environment:
       - *default_env_pg_user
       - *default_env_pg_password
       - MUSICBRAINZ_USE_PROXY=1
+      - STATIC_RESOURCES_LOCATION=/static/build
       - LIMBO_ADMIN_PORT=${LIMBO_ADMIN_PORT:-4815}
       - LIMBO_ADMIN_WEB_START_SCRIPT=/opt/limbo-admin/web-server-start.sh
       - LIMBO_ADMIN_WEB_STOP_SCRIPT=/opt/limbo-admin/web-server-stop.sh
