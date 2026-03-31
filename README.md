@@ -131,32 +131,13 @@ Deploy source-of-truth files in this repo now live at root:
 
 Deploy helper scripts for the target `admin/` folder are maintained under `deploy-admin/` in this repo and are synced to `admin/` at deploy/runtime.
 
-### Regular update
-
-Pull the latest images and restart:
-
-```
-docker compose pull
-docker compose up -d
-```
-
-If you want MusicBrainz to remain permanently fixed (no automatic refresh), pin it to an immutable digest in `.env` and disable pulling for that service:
-
-```bash
-MUSICBRAINZ_IMAGE=espressomatic/limbo-musicbrainz:test@sha256:<digest>
-MUSICBRAINZ_PULL_POLICY=never
-```
-
-With that pin in place, regular `docker compose pull` / `docker compose up -d` updates will keep your existing MusicBrainz image indefinitely until you intentionally change the digest.
-
-### Major update (with new components, etc.)
+### Updating
 
 Pull the latest images and restart two times:
 
 ```
 docker compose pull
 docker compose up -d
-(docker compose down) - optional
 docker compose up -d
 ```
 
@@ -172,7 +153,7 @@ _**Use the SETTINGS button on the top right of the webUI to configure your Lidar
 
 ## Notes
 
-- _Continued (scheduled) replication and indexing is required to keep the database up-to-date and at optimal performance_
+- _Continued (scheduled) replication and indexing is required to keep the database up-to-date and at optimal performance - this is already active by default_
 - This stack is configured for private use on a LAN, behind a firewall, **IT'S NOT SECURED FOR THE OPEN INTERNET**
 
 > [!NOTE]
