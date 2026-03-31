@@ -1,4 +1,4 @@
-#   Limbo 1.9.331.893
+#   Limbo 1.9.331.914
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -123,7 +123,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.331.893
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.331.914
     volumes:
       - ./:/out
     restart: "no"
@@ -363,11 +363,11 @@ services:
           create_host_path: true
     restart: unless-stopped
     depends_on: *assets_depends
-  dldr-core:
+  limbo-dldr:
     image: *image_dldr
     pull_policy: always
-    container_name: dldr-core
-    hostname: dldr-core
+    container_name: limbo-dldr
+    hostname: limbo-dldr
     restart: unless-stopped
     command: ["${DLDR_COMMAND:-/app/scripts/DLDR-start.core.sh}"]
     ports:
