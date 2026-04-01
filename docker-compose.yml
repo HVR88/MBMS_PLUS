@@ -1,4 +1,4 @@
-#   Limbo 1.9.331.914
+#   Limbo 1.9.331.915
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -84,6 +84,7 @@ x-default-values:
 x-default-env-items:
   tz: &default_env_tz "TZ=${TZ:-UTC}"
   mbdb_port: &default_env_mbdb_port "LIMBO_MBDB_PORT=${LIMBO_MBDB_PORT}"
+  mq_port: &default_env_mq_port "LIMBO_MQ_PORT=${LIMBO_MQ_PORT}"
   pg_user: &default_env_pg_user "POSTGRES_USER=${LIMBO_MBDB_USER:-musicbrainz}"
   pg_password: &default_env_pg_password "POSTGRES_PASSWORD=${LIMBO_MBDB_PASSWORD:-musicbrainz}"
   pg_port: &default_env_pg_port "PGPORT=${LIMBO_MBDB_PORT}"
@@ -93,6 +94,7 @@ x-env-lists:
   pg_runtime: &env_list_pg_runtime
     - *default_env_tz
     - *default_env_mbdb_port
+    - *default_env_mq_port
     - *default_env_pg_user
     - *default_env_pg_password
     - *default_env_pg_port
@@ -123,7 +125,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.331.914
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.331.915
     volumes:
       - ./:/out
     restart: "no"
@@ -188,6 +190,7 @@ services:
         max-file: "10"
     environment:
       - *default_env_tz
+      - *default_env_mq_port
     restart: unless-stopped
     ulimits:
       nofile: 65536
@@ -248,7 +251,9 @@ services:
     environment:
       - *default_env_tz
       - SOLR_HEAP=${SOLR_HEAP:-4g}
+      - SOLR_PORT=${LIMBO_SOLR_PORT}
       - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
+    command: ["solr-foreground", "-p", "${LIMBO_SOLR_PORT}"]
     expose:
       - *default_limbo_solr_port
     volumes:
@@ -283,6 +288,7 @@ services:
     environment:
       - *default_env_pg_user
       - *default_env_pg_password
+      - LIMBO_MBRAINZ_WEB_PORT=${LIMBO_MBRAINZ_WEB_PORT}
       - MUSICBRAINZ_USE_PROXY=1
       - STATIC_RESOURCES_LOCATION=/static/build
       - LIMBO_ADMIN_PORT=${LIMBO_ADMIN_PORT}
