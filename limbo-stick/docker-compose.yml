@@ -5,12 +5,9 @@ services:
     restart: unless-stopped
     environment:
       API_SERVICE: ${API_SERVICE:-true}
-      LIDARR_URL: ${LIDARR_URL}
-      API_KEY: ${API_KEY:-}
       AUTO_ATTACH_LIDARR_NETWORK: ${AUTO_ATTACH_LIDARR_NETWORK:-true}
       LIMBO_CONTAINER_NAME: ${LIMBO_CONTAINER_NAME:-limbo-stick}
       LIMBO_STICK_HOST: ${LIMBO_STICK_HOST:-0.0.0.0}
-      LIMBO_STICK_PORT: ${LIMBO_STICK_PORT}
       LIDARR_CONFIG_XML: ${LIDARR_CONFIG_XML:-/config/config.xml}
       LIDARR_SQLITE_PATH: ${LIDARR_SQLITE_PATH:-/config/lidarr.db}
       LIDARR_CONTAINER_NAME: ${LIDARR_CONTAINER_NAME:-lidarr}
@@ -21,8 +18,6 @@ services:
       Lidarr__Postgres__Password: ${LIDARR__POSTGRES__PASSWORD:-}
       Lidarr__Postgres__MainDb: ${LIDARR__POSTGRES__MAINDB:-}
       Lidarr__Postgres__LogDb: ${LIDARR__POSTGRES__LOGDB:-}
-    ports:
-      - "${LIMBO_STICK_PORT}:${LIMBO_STICK_PORT}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${LIDARR_CONFIG_PATH:-./lidarr-config}:/config
