@@ -3,6 +3,7 @@ services:
     image: espressomatic/limbo-stick:test
     container_name: limbo-stick
     restart: unless-stopped
+    network_mode: host
     environment:
       API_SERVICE: ${API_SERVICE:-true}
       AUTO_ATTACH_LIDARR_NETWORK: ${AUTO_ATTACH_LIDARR_NETWORK:-true}
