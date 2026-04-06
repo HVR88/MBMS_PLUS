@@ -4,21 +4,6 @@ services:
     container_name: limbo-stick
     restart: unless-stopped
     network_mode: host
-    environment:
-      API_SERVICE: ${API_SERVICE:-true}
-      AUTO_ATTACH_LIDARR_NETWORK: ${AUTO_ATTACH_LIDARR_NETWORK:-true}
-      LIMBO_CONTAINER_NAME: ${LIMBO_CONTAINER_NAME:-limbo-stick}
-      LIMBO_STICK_HOST: ${LIMBO_STICK_HOST:-0.0.0.0}
-      LIDARR_CONFIG_XML: ${LIDARR_CONFIG_XML:-/config/config.xml}
-      LIDARR_SQLITE_PATH: ${LIDARR_SQLITE_PATH:-/config/lidarr.db}
-      LIDARR_CONTAINER_NAME: ${LIDARR_CONTAINER_NAME:-lidarr}
-      LIDARR_POSTGRES_URL: ${LIDARR_POSTGRES_URL:-}
-      Lidarr__Postgres__Host: ${LIDARR__POSTGRES__HOST:-}
-      Lidarr__Postgres__Port: ${LIDARR__POSTGRES__PORT:-}
-      Lidarr__Postgres__User: ${LIDARR__POSTGRES__USER:-}
-      Lidarr__Postgres__Password: ${LIDARR__POSTGRES__PASSWORD:-}
-      Lidarr__Postgres__MainDb: ${LIDARR__POSTGRES__MAINDB:-}
-      Lidarr__Postgres__LogDb: ${LIDARR__POSTGRES__LOGDB:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${LIDARR_CONFIG_PATH:-./lidarr-config}:/config
+      - ./lidarr-config:/config
