@@ -6,13 +6,9 @@
 
 ## Introduction
 
-Limbo is a web-based music library toolset and download manager, currently supporting the Lidarr music manager. It contains a full MusicBrainz mirror server with fast, easy and automated installation. No plugins or settings need to be changed in Lidarr to use Limbo.
+Limbo is a web-based All-in-One enhancement and downloader for Lidarr music manager. It contains the full MusicBrainz server with an easy and automated installation. No changes to Lidarr are required to use Limbo.
 
-Based on the Lidarr Metadata API, coupled with a customized MusicBrainz database, multi-source metadata system, download/import manager and other features.
-
-_You say that you don't want vinyl formats in releases? No problem, filter that out._
-
-From the Limbo web interface, you can filter/modify media formats for all releases, track multiple versions of the same album in Lidarr, set up additional data providers, inclduing login-less free options, and more.
+The back end is based on the Lidarr Metadata API, coupled with a customized MusicBrainz database, a multi-source metadata system and download manager.
 
 **Currently implemented features:**
 
@@ -20,16 +16,17 @@ From the Limbo web interface, you can filter/modify media formats for all releas
 - Release filtering (block specific media formats: vinyl, tape, etc.)
 - Release / Artist refreshing (paste URL/ID single/bulk and refrecs albums/artists)
 - Artist Photos, Cover Art + Data providers selection, with drag & drop priority
+- Lidarr visual themes
+- Lidarr control - start/stop/restart/update Lidarr, cancel/schedule tasks, clean/delete plugins
 
 **Features in testing:**
 
 - Automated / Manual Downloads - built-in downloader or use your own external client (SLSKD)
 - Release/Album splitting - manage and download original and Deluxe, Anniversary (etc.) releases
-- Lidarr control API - start/stop/restart/update Lidarr, cancel/schedule tasks, clean/delete plugins
 - One-shot bulk artwork search with direct Lidarr installation
 - CSV / JSON Lidarr data export and custom reporting
 
-Other features are currently in development or testing. Update notifications are displayed at the bottom of the Limbo WebUI.
+Other features are currently in development or testing.
 
 <p align="center">
   <img src="https://github.com/HVR88/Docs-Extras/blob/master/Limbo-open-1.9.227.png?raw=true" alt="Limbo" width="600" />
@@ -40,7 +37,7 @@ Other features are currently in development or testing. Update notifications are
 - Linux server / VM / LXC with Docker support
 - 300 GB of available storage (400-500 GB recommended)
   - Additional storage for optional downloading and music sharing
-- 8 GB of memory available to the container
+- 8GB of memory available to the container, 16GB+ recommended
 - 2-4 hours installation time
 - MusicBrainz account and Data Feed access token
 
@@ -51,7 +48,7 @@ Other features are currently in development or testing. Update notifications are
 - Create an account at https://MusicBrainz.com
 - Get your _Live Data Feed Access Token_ from Metabrainz https://metabrainz.org/profile
 
-### 2. Download the Limbo compose files (no git required)
+### 2. Download the Limbo compose files
 
 Create a folder and download the latest `docker-compose.yml` and `example.env`
 from the Limbo release assets (or the raw files in this repo).
@@ -71,7 +68,7 @@ Copy `example.env` to `.env`, then edit the top section before first run:
 cp example.env .env
 ```
 
-Next configure these minimum variables in the .env file:
+Set the required variable in the .env file:
 
 - Set **`MUSICBRAINZ_REPLICATION_TOKEN`** (get from https://metabrainz.org/profile)
 
@@ -79,17 +76,11 @@ Next configure these minimum variables in the .env file:
 >
 > When deploying from a terminal, use _screen_ or _tmux_ so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
 
-### 4. Download containers, build DB & start up (!) _This takes 2-4 hours_
+### 4. Download containers, build DB & start up (!) _This takes 2-4 hours - one time only_
 
 ```
 docker compose up -d
 ```
-
-> [!NOTE]
->
-> Limbo init-state volume is now `limbo_data`. Existing installs using the legacy
-> `limbo_bridge_init_state` volume are migrated automatically on startup. The
-> in-container state path is now `/metadata/limbo_data`.
 
 ## Wrap-Up
 
@@ -123,13 +114,9 @@ docker compose logs -f --no-log-prefix --tail=200 \
 The `.env` file is user-maintained and won't be changed when updating. Updating will refresh all other managed files automatically: admin scripts,
 compose template, and defaults, including _example.env._
 
-Deploy source-of-truth files in this repo now live at root:
-
 - `docker-compose.yml`
 - `example.env`
 - `README.md`
-
-Deploy helper scripts for the target `admin/` folder are maintained under `deploy-admin/` in this repo and are synced to `admin/` at deploy/runtime.
 
 ### Updating
 
@@ -141,7 +128,7 @@ docker compose up -d
 docker compose up -d
 ```
 
-You should also look in the _`example.env`_ file for updates that may need to be applied to `.env` - if there are new required variables, you should get a warning on the second compose up.
+You should look in the _`example.env`_ file for updates that may need to be applied to `.env` - if there are new required variables, you should get a warning on the second compose up.
 
 ## Limbo Configuration
 
@@ -153,16 +140,17 @@ _**Use the SETTINGS button on the top right of the webUI to configure your Lidar
 
 ## Notes
 
-- _Continued (scheduled) replication and indexing is required to keep the database up-to-date and at optimal performance - this is already active by default_
 - This stack is configured for private use on a LAN, behind a firewall, **IT'S NOT SECURED FOR THE OPEN INTERNET**
 
 > [!NOTE]
 >
 > Limbo is for personal use only
 
-## Maintenance (optional)
+## Maintenance
 
-Keep database scheduled tasks and mainenance options enabled in Limbo Settings.
+- _Continued (scheduled) replication and indexing is required to keep the database up-to-date and at optimal performance - this is already active by default_
+
+Database schedules can be adjusted the Maintenance section of Limbo Settings.
 
 Additional helper scripts are synced into `admin/` automatically when the stack starts or updates:
 
@@ -171,7 +159,4 @@ Additional helper scripts are synced into `admin/` automatically when the stack 
 - `admin/restart [services...]` (restart services)
 - `admin/replicate-now` (trigger replication immediately)
 - `admin/reindex-now` (trigger search reindex)
-- `admin/soulseek-auth-set --rotate [--json]` (roll and apply a generated Soulseek username/password)
-- `admin/soulseek-auth-set --username <name> [--password <pass>] [--json]` (pre-validates Soulseek login before apply; returns error instead of rotating on failure)
 - `admin/bootstrap-reset` (clear bootstrap markers; prompts for confirmation)
-- `admin/retire-limbo-bridge [--apply] [--prune-images]` (migrate deprecated `limbo-bridge` image references to canonical `limbo`, with stale-container cleanup)
