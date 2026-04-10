@@ -6,26 +6,21 @@
 
 ## Introduction
 
-Limbo is a web-based music library toolset and download manager, currently supporting the Lidarr music manager. It contains a full MusicBrainz mirror server with fast, easy and automated installation. No plugins or settings need to be changed in Lidarr to use Limbo.
-
-Based on the Lidarr Metadata API, coupled with a customized MusicBrainz database, multi-source metadata system, download/import manager and other features.
-
-_You say that you don't want vinyl formats in releases? No problem, filter that out._
-
-From the Limbo web interface, you can filter/modify media formats for all releases, track multiple versions of the same album in Lidarr, set up additional data providers, inclduing login-less free options, and more.
+Limbo is a toolset and downloader for Lidarr music manager. It contains a full MusicBrainz mirror server with easy automated installation. No settings need to be changed in Lidarr to use Limbo.
 
 **Currently implemented features:**
 
 - Library Statistics
-- Release filtering (block specific media formats: vinyl, tape, etc.)
+- Release blocking (block specific media formats: vinyl, tape, etc.)
 - Release / Artist refreshing (paste URL/ID single/bulk and refrecs albums/artists)
 - Artist Photos, Cover Art + Data providers selection, with drag & drop priority
+- Lidarr control API - start/stop/restart/update Lidarr, cancel/pause scheduler tasks
 
 **Features in testing:**
 
 - Automated / Manual Downloads - built-in downloader or use your own external client (SLSKD)
+- Manual bulk importing
 - Release/Album splitting - manage and download original and Deluxe, Anniversary (etc.) releases
-- Lidarr control API - start/stop/restart/update Lidarr, cancel/schedule tasks, clean/delete plugins
 - One-shot bulk artwork search with direct Lidarr installation
 - CSV / JSON Lidarr data export and custom reporting
 
@@ -40,7 +35,7 @@ Other features are currently in development or testing. Update notifications are
 - Linux server / VM / LXC with Docker support
 - 300 GB of available storage (400-500 GB recommended)
   - Additional storage for optional downloading and music sharing
-- 8 GB of memory available to the container
+- 8 GB of memory available to the container, 16GB or more recommended
 - 2-4 hours installation time
 - MusicBrainz account and Data Feed access token
 
@@ -59,7 +54,7 @@ from the Limbo release assets (or the raw files in this repo).
 ```bash
 mkdir -p /opt/docker/limbo
 cd /opt/docker/limbo
-curl -fsSL -o limbo-latest.zip https://github.com/HVR88/Limbo/releases/latest/download/limbo-1.9.12.zip
+curl -fsSL -o limbo-latest.zip https://github.com/HVR88/Limbo/releases/latest/download/limbo-latest.zip
 unzip -o limbo-latest.zip
 ```
 
@@ -71,7 +66,7 @@ Copy `example.env` to `.env`, then edit the top section before first run:
 cp example.env .env
 ```
 
-Next configure these minimum variables in the .env file:
+Next configure this variable in the .env file:
 
 - Set **`MUSICBRAINZ_REPLICATION_TOKEN`** (get from https://metabrainz.org/profile)
 
@@ -84,12 +79,6 @@ Next configure these minimum variables in the .env file:
 ```
 docker compose up -d
 ```
-
-> [!NOTE]
->
-> Limbo init-state volume is now `limbo_data`. Existing installs using the legacy
-> `limbo_bridge_init_state` volume are migrated automatically on startup. The
-> in-container state path is now `/metadata/limbo_data`.
 
 ## Wrap-Up
 
@@ -145,8 +134,6 @@ You should also look in the _`example.env`_ file for updates that may need to be
 
 ## Limbo Configuration
 
-**WORK IN PROGRESS**
-
 Go to **http://<your_LIMBO_IP>:4808**
 
 _**Use the SETTINGS button on the top right of the webUI to configure your Lidarr IP address, port and API KEY. The API Key can be found in Lidarr's Settings -> General page.**_
@@ -156,11 +143,7 @@ _**Use the SETTINGS button on the top right of the webUI to configure your Lidar
 - _Continued (scheduled) replication and indexing is required to keep the database up-to-date and at optimal performance - this is already active by default_
 - This stack is configured for private use on a LAN, behind a firewall, **IT'S NOT SECURED FOR THE OPEN INTERNET**
 
-> [!NOTE]
->
-> Limbo is for personal use only
-
-## Maintenance (optional)
+## Maintenance
 
 Keep database scheduled tasks and mainenance options enabled in Limbo Settings.
 
@@ -171,7 +154,4 @@ Additional helper scripts are synced into `admin/` automatically when the stack 
 - `admin/restart [services...]` (restart services)
 - `admin/replicate-now` (trigger replication immediately)
 - `admin/reindex-now` (trigger search reindex)
-- `admin/soulseek-auth-set --rotate [--json]` (roll and apply a generated Soulseek username/password)
-- `admin/soulseek-auth-set --username <name> [--password <pass>] [--json]` (pre-validates Soulseek login before apply; returns error instead of rotating on failure)
 - `admin/bootstrap-reset` (clear bootstrap markers; prompts for confirmation)
-- `admin/retire-limbo-bridge [--apply] [--prune-images]` (migrate deprecated `limbo-bridge` image references to canonical `limbo`, with stale-container cleanup)
