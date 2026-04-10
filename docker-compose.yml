@@ -1,4 +1,4 @@
-#   Limbo 1.9.405.983
+#   Limbo 1.9.410.1062
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -72,7 +72,7 @@ x-default-values:
   musicbrainz_web_port: &default_musicbrainz_web_port "${LIMBO_MBRAINZ_WEB_PORT}"
   limbo_mq_port: &default_limbo_mq_port "${LIMBO_MQ_PORT}"
   limbo_solr_port: &default_limbo_solr_port "${LIMBO_SOLR_PORT}"
-  search_mem_limit: &default_search_mem_limit "${SEARCH_MEM_LIMIT:-4g}"
+  search_mem_limit: &default_search_mem_limit "${SEARCH_MEM_LIMIT:-8g}"
   search_bootstrap_mem_limit: &default_search_bootstrap_mem_limit "${SEARCH_BOOTSTRAP_MEM_LIMIT:-8g}"
   limbo_mbdb_port: &default_limbo_mbdb_port "${LIMBO_MBDB_PORT}"
   mb_db_host: &default_mb_db_host "${MB_DB_HOST:-db}"
@@ -127,7 +127,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.405.983
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.410.1062
     volumes:
       - ./:/out
     restart: "no"
@@ -257,7 +257,7 @@ services:
       - SOLR_HEAP=${SOLR_HEAP:-4g}
       - SOLR_PORT=${LIMBO_SOLR_PORT}
       - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
-    command: ["solr-foreground", "-p", "${LIMBO_SOLR_PORT}"]
+    command: ["solr-foreground", "--cloud", "-p", "${LIMBO_SOLR_PORT}"]
     expose:
       - *default_limbo_solr_port
     volumes:
