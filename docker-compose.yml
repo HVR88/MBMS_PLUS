@@ -1,4 +1,4 @@
-#   Limbo 1.9.411.1080
+#   Limbo 1.9.412.1085
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -91,6 +91,7 @@ x-default-env-items:
   pg_password: &default_env_pg_password "POSTGRES_PASSWORD=${LIMBO_MBDB_PASSWORD:-musicbrainz}"
   pg_port: &default_env_pg_port "PGPORT=${LIMBO_MBDB_PORT}"
   postgres_port: &default_env_postgres_port "POSTGRES_PORT=${LIMBO_MBDB_PORT}"
+  mb_db_port: &default_env_mb_db_port "MB_DB_PORT=${LIMBO_MBDB_PORT}"
   db_port: &default_env_db_port "DB_PORT=${LIMBO_MBDB_PORT}"
 x-env-lists:
   pg_runtime: &env_list_pg_runtime
@@ -101,6 +102,7 @@ x-env-lists:
     - *default_env_pg_password
     - *default_env_pg_port
     - *default_env_postgres_port
+    - *default_env_mb_db_port
     - *default_env_db_port
 volumes:
   mqdata:
@@ -127,7 +129,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.411.1080
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.412.1085
     volumes:
       - ./:/out
     restart: "no"
