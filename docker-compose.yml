@@ -1,4 +1,4 @@
-#   Limbo 1.9.414.1154
+#   Limbo 1.9.414.1155
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -129,7 +129,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.414.1154
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.414.1155
     volumes:
       - ./:/out
     restart: "no"
