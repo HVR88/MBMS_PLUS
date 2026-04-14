@@ -1,4 +1,4 @@
-#   Limbo 1.9.413.1107
+#   Limbo 1.9.413.1145
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -129,7 +129,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.413.1107
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.413.1145
     volumes:
       - ./:/out
     restart: "no"
@@ -237,6 +237,7 @@ services:
     volumes:
       - solrdata:/var/solr
       - solrdump:/var/cache/musicbrainz/solr-backups
+      - solrdump:/var/solr/solr-backups
       - dbdump:/media/dbdump:ro
     ulimits:
       nofile: 65536
@@ -266,6 +267,7 @@ services:
       - dbdump:/media/dbdump:ro
       - solrdata:/var/solr
       - solrdump:/var/cache/musicbrainz/solr-backups
+      - solrdump:/var/solr/solr-backups
     depends_on:
       <<: [*assets_depends, *dep_search_bootstrap_completed]
   musicbrainz:
