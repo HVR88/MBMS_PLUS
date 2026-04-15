@@ -15,8 +15,8 @@ Limbo is a toolset and downloader for Lidarr music manager. It contains a full M
 - Release / Artist refreshing (paste URL/ID single/bulk and refresh albums/artists)
 - Artist Photos, Cover Art + Data providers selection, with drag & drop precedence
 - Lidarr control API - start/stop/restart/update Lidarr, cancel/pause scheduler tasks
-- Lidarr theme system incorporating default themes + Theme.Park.dev with community options
-- SMB network browser and path mounting - you don't edit env files
+- Lidarr theme system with over 30 themes
+- SMB network browser and path mounting - no env files to edit
 
 **Features in testing:**
 
@@ -34,12 +34,11 @@ Other features are currently in development or testing. Update notifications are
 
 ## Requirements
 
-- Linux server / VM / LXC with Docker support
-- 300 GB of available storage (400-500 GB recommended)
+- Linux server or VM or LXC with Docker
+- 300-400 GB of available storage (400-500 GB recommended)
   - Additional storage for optional downloading and music sharing
-- 8 GB of memory available to the container, 16GB or more recommended
+- 8 GB of memory available to the container (16GB+ recommended)
 - 2-4 hours installation time
-- MusicBrainz account and Data Feed access token
 
 ## Quick Start
 
@@ -62,13 +61,13 @@ unzip -o limbo-latest.zip
 
 ### 3. Copy and configure env file
 
-Copy `example.env` to `.env`, then edit the top section before first run:
+Copy `example.env` to `.env`, and edit the top section before first run:
 
 ```bash
 cp example.env .env
 ```
 
-Next configure this variable in the .env file:
+Configure this variable in the .env file:
 
 - Set **`MUSICBRAINZ_REPLICATION_TOKEN`** (get from https://metabrainz.org/profile)
 
@@ -81,6 +80,12 @@ Next configure this variable in the .env file:
 ```
 docker compose up -d
 ```
+
+### 5. Install Limbo Stick next to Lidarr
+
+On your Lidarr host or Docker platform, install the Limbo Stick container next to Lidarr.
+
+While Limbo itself can be installed on any host and doesn't need to be next to Lidarr, the special Limbo Stick container does. It's a helper that allows Limbo direct control over Lidarr's environment, to add theme support, built-in download buttons and the ability to start/stop/pause tasks.
 
 ## Wrap-Up
 
@@ -100,10 +105,12 @@ docker compose logs -f --no-log-prefix --tail=200 \
 
 ## Browser Access
 
-**Limbo** web UI: **http://HOST_IP:4808**
+- **Limbo** web UI: **http://HOST_IP:4808**
 
-**MusicBrainz** local web site: **http://HOST_IP:4820**
-<br>(Off by default, enable it in Limbo General Settings)
+- **MusicBrainz** local web site: **http://HOST_IP:4820**
+  <br>(Off by default, enable it in Limbo General Settings)
+
+- **Limbo Stick Status** web page: **http://HOST_IP:4810**
 
 > [!TIP]
 >
