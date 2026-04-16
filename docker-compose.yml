@@ -1,4 +1,4 @@
-#   Limbo 1.9.416.1188
+#   Limbo 1.9.416.1189
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -83,6 +83,9 @@ x-default-values:
   limbo_cache_db: &default_limbo_cache_db "${LIMBO_CACHE_DB:-limbo_cache_db}"
   limbo_cache_user: &default_limbo_cache_user "${LIMBO_CACHE_USER:-limbo}"
   limbo_cache_password: &default_limbo_cache_password "${LIMBO_CACHE_PASSWORD:-limbo}"
+  limbo_uid: &default_limbo_uid "${LIMBO_UID:-${PUID:-99}}"
+  limbo_gid: &default_limbo_gid "${LIMBO_GID:-${PGID:-100}}"
+  limbo_umask: &default_limbo_umask "${LIMBO_UMASK:-${UMASK:-002}}"
   limbo_data_root: &default_limbo_data_root "${LIMBO_DATA_ROOT:-./data}"
   limbo_network_name: &default_limbo_network_name "${LIMBO_NETWORK_NAME:-limbo}"
   limbo_network_external: &default_limbo_network_external "${LIMBO_NETWORK_EXTERNAL:-false}"
@@ -116,7 +119,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.416.1188
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.416.1189
     volumes:
       - ./:/out
     restart: "no"
@@ -124,6 +127,7 @@ services:
     image: *image_limbo
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/core-env.sh"]
     env_file: *env_files_runtime
+    command: ["/bin/sh", "/opt/limbo-preflight/core-env.sh"]
     volumes:
       - ./.env:/run/limbo.env:ro
       - ${LIMBO_DATA_ROOT:-./data}:/limbo-data-root
@@ -132,7 +136,12 @@ services:
   limbo-data-migrate:
     image: *image_limbo
     pull_policy: always
-    entrypoint: ["/bin/sh", "/opt/limbo-preflight/migrate-limbo-data.sh"]
+    command: ["/bin/sh", "/opt/limbo-preflight/migrate-limbo-data.sh"]
+    environment:
+      - LIMBO_UID=${LIMBO_UID:-${PUID:-99}}
+      - LIMBO_GID=${LIMBO_GID:-${PGID:-100}}
+      - LIMBO_UMASK=${LIMBO_UMASK:-${UMASK:-002}}
+      - LIMBO_WRITE_PATHS=/metadata/limbo_data
     volumes:
       - ${LIMBO_DATA_ROOT:-./data}/limbo_data:/metadata/limbo_data
     restart: "no"
@@ -140,7 +149,12 @@ services:
   limbo-key-init:
     image: *image_limbo
     pull_policy: always
-    entrypoint: ["python3.14", "/opt/limbo-preflight/init-limbo-key.py"]
+    command: ["python3.14", "/opt/limbo-preflight/init-limbo-key.py"]
+    environment:
+      - LIMBO_UID=${LIMBO_UID:-${PUID:-99}}
+      - LIMBO_GID=${LIMBO_GID:-${PGID:-100}}
+      - LIMBO_UMASK=${LIMBO_UMASK:-${UMASK:-002}}
+      - LIMBO_WRITE_PATHS=/metadata/limbo_data
     volumes:
       - ${LIMBO_DATA_ROOT:-./data}/limbo_data:/metadata/limbo_data
     restart: "no"
@@ -149,7 +163,12 @@ services:
   limbo-musicbrainz-admin-seed:
     image: *image_limbo
     pull_policy: always
-    entrypoint: ["/bin/sh", "/opt/limbo-preflight/seed-musicbrainz-admin.sh"]
+    command: ["/bin/sh", "/opt/limbo-preflight/seed-musicbrainz-admin.sh"]
+    environment:
+      - LIMBO_UID=${LIMBO_UID:-${PUID:-99}}
+      - LIMBO_GID=${LIMBO_GID:-${PGID:-100}}
+      - LIMBO_UMASK=${LIMBO_UMASK:-${UMASK:-002}}
+      - LIMBO_WRITE_PATHS=/metadata/limbo_data
     volumes:
       - ${LIMBO_DATA_ROOT:-./data}/limbo_data:/metadata/limbo_data
     restart: "no"
@@ -320,19 +339,36 @@ services:
   indexer-cron:
     image: *image_indexer
     env_file: *env_files_runtime
-    environment: *env_list_pg_runtime
+    environment:
+      - *default_env_tz
+      - *default_env_mbdb_port
+      - *default_env_mq_port
+      - *default_env_pg_user
+      - *default_env_pg_password
+      - *default_env_pg_port
+      - *default_env_postgres_port
+      - *default_env_mb_db_port
+      - *default_env_db_port
+      - LIMBO_UID=${LIMBO_UID:-${PUID:-99}}
+      - LIMBO_GID=${LIMBO_GID:-${PGID:-100}}
+      - LIMBO_UMASK=${LIMBO_UMASK:-${UMASK:-002}}
+      - LIMBO_WRITE_PATHS=/media/dbdump
     volumes:
       - ${LIMBO_DATA_ROOT:-./data}/dbdump:/media/dbdump
-    command: ["/usr/local/bin/indexer-cron.sh"]
+    command: ["/usr/local/bin/indexer-runtime-user.sh", "/usr/local/bin/indexer-cron.sh"]
     restart: unless-stopped
     depends_on:
       <<: [*assets_depends, *dep_db_started, *dep_search_started]
   limbo-init:
     image: *image_limbo
     pull_policy: always
-    entrypoint: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
+    command: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
     environment:
       TZ: *default_tz
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/metadata/limbo_data"
       MB_DB_HOST: *default_mb_db_host
       MB_DB_PORT: *default_mb_db_port
       MB_DB_USER: *default_mb_db_user
@@ -351,9 +387,13 @@ services:
     pull_policy: always
     # Host mode remains intentional: helper performs host-level storage/network discovery.
     network_mode: host
-    entrypoint: ["python3.14", "-m", "metadata_srv.storage_discovery_helper"]
+    command: ["python3.14", "-m", "metadata_srv.storage_discovery_helper"]
     env_file: *env_files_runtime
     environment:
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/metadata/limbo_data /run/limbo-runtime"
       LIMBO_HOST_HELPER_PORT: *default_limbo_host_helper_port
       LIMBO_SECRET_MASTER_KEY: "${LIMBO_SECRET_MASTER_KEY:-}"
     volumes:
@@ -373,6 +413,11 @@ services:
     hostname: limbo-dldr
     restart: unless-stopped
     command: ["${DLDR_COMMAND:-/app/scripts/DLDR-start.core.sh}"]
+    environment:
+      - LIMBO_UID=${LIMBO_UID:-${PUID:-99}}
+      - LIMBO_GID=${LIMBO_GID:-${PGID:-100}}
+      - LIMBO_UMASK=${LIMBO_UMASK:-${UMASK:-002}}
+      - LIMBO_WRITE_PATHS=/data
     ports:
       - "${LIMBO_DLDR_API_PORT}:4812"
     volumes:
@@ -408,6 +453,10 @@ services:
     env_file: *env_files_runtime
     environment:
       TZ: *default_tz
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/metadata/limbo_data"
       LIMBO_REDIS_PORT: *default_limbo_redis_port
       POSTGRES_CACHE_HOST: *default_mb_db_host
       POSTGRES_CACHE_PORT: *default_mb_db_port
