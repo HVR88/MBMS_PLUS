@@ -3,7 +3,16 @@ services:
     image: espressomatic/limbo-stick:test
     container_name: limbo-stick
     restart: unless-stopped
-    network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./lidarr-config:/config
+      - ${LIMBOSTICK_DATA_ROOT:-limbo_stick_config}${LIMBOSTICK_DATA_ROOT:+/limbo-stick/lidarr-config}:/config
+    networks:
+      - limbo
+
+networks:
+  limbo:
+    name: ${LIMBOSTICK_NETWORK_NAME:-limbo}
+    external: ${LIMBOSTICK_NETWORK_EXTERNAL:-true}
+
+volumes:
+  limbo_stick_config:
