@@ -1,10 +1,10 @@
 {
   "channel": "test",
-  "generated_at_utc": "2026-04-16T19:09:00.052029+00:00",
+  "generated_at_utc": "2026-04-16T20:47:41.858607+00:00",
   "run_attempt": "1",
-  "run_id": "24528846551",
-  "source_ref": "integration",
+  "run_id": "24533143062",
+  "source_ref": "unraid-compose",
   "source_repository": "HVR88/PRIVATE_Limbo-DEV",
-  "source_sha": "399a7ef67e5a26dfa21ceb37040c29f795d9d7a8",
-  "version": "1.9.416.1194"
+  "source_sha": "b28552cf03a5bc839ef8530d19886c85a81e8413",
+  "version": "1.9.416.1200"
 }
