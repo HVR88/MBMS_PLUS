@@ -1,4 +1,4 @@
-# Limbo Stick Instructions & Examples
+# Limbo Stick API Query Instructions & Examples
 
 Quick and dirty.
 
