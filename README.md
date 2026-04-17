@@ -126,6 +126,15 @@ docker compose up -d
 docker compose up -d
 ```
 
+If you have any issues with stale containers, then do this instead:
+
+```
+sudo docker compose pull
+sudo docker compose up -d
+sudo docker compose pull
+sudo docker compose up -d --remove-orphans --force-recreate
+```
+
 The `.env` file is user-maintained and won't be changed when updating. Updating will refresh all other managed files automatically: admin scripts, compose template, and defaults, including _example.env._
 
 You should look in the _`example.env`_ file for any changes that may need to be applied to `.env` - if there are new required variables, you should get a warning on the second compose up.
