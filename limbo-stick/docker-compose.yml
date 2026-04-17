@@ -1,9 +1,0 @@
-services:
-  limbo-stick:
-    image: espressomatic/limbo-stick:test
-    container_name: limbo-stick
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./lidarr-config:/config

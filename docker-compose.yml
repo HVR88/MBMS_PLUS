@@ -1,4 +1,4 @@
-#   Limbo 1.9.414.1172
+#   Limbo 1.9.417.1222
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -42,7 +42,8 @@ x-dependency-items:
   limbo_key_init_completed: &dep_limbo_key_init_completed
     limbo-key-init:
       condition: service_completed_successfully
-  limbo_musicbrainz_admin_seed_completed: &dep_limbo_musicbrainz_admin_seed_completed
+  limbo_musicbrainz_admin_seed_completed:
+    &dep_limbo_musicbrainz_admin_seed_completed
     limbo-musicbrainz-admin-seed:
       condition: service_completed_successfully
 x-images:
@@ -83,6 +84,11 @@ x-default-values:
   limbo_cache_db: &default_limbo_cache_db "${LIMBO_CACHE_DB:-limbo_cache_db}"
   limbo_cache_user: &default_limbo_cache_user "${LIMBO_CACHE_USER:-limbo}"
   limbo_cache_password: &default_limbo_cache_password "${LIMBO_CACHE_PASSWORD:-limbo}"
+  limbo_uid: &default_limbo_uid "${LIMBO_DATA_ROOT:+${LIMBO_UID:-${PUID:-}}}"
+  limbo_gid: &default_limbo_gid "${LIMBO_DATA_ROOT:+${LIMBO_GID:-${PGID:-}}}"
+  limbo_umask: &default_limbo_umask "${LIMBO_UMASK:-${UMASK:-002}}"
+  limbo_network_name: &default_limbo_network_name "${LIMBO_NETWORK_NAME:-limbo}"
+  limbo_network_external: &default_limbo_network_external "${LIMBO_NETWORK_EXTERNAL:-false}"
 x-default-env-items:
   tz: &default_env_tz "TZ=${TZ:-UTC}"
   mbdb_port: &default_env_mbdb_port "LIMBO_MBDB_PORT=${LIMBO_MBDB_PORT}"
@@ -105,9 +111,9 @@ x-env-lists:
     - *default_env_mb_db_port
     - *default_env_db_port
 volumes:
-  mqdata:
-    driver: local
   pgdata:
+    driver: local
+  mqdata:
     driver: local
   solrdata:
     driver: local
@@ -119,17 +125,18 @@ volumes:
     name: limbo_data
     driver: local
   dldr_data:
-    name: dldr_data
     driver: local
-  limbo_bridge_init_state:
-    name: limbo_bridge_init_state
-    driver: local
+
+networks:
+  default:
+    name: *default_limbo_network_name
+    external: ${LIMBO_NETWORK_EXTERNAL:-false}
 services:
   assets:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.414.1172
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.417.1222
     volumes:
       - ./:/out
     restart: "no"
@@ -137,39 +144,59 @@ services:
     image: *image_limbo
     entrypoint: ["/bin/sh", "/opt/limbo-preflight/core-env.sh"]
     env_file: *env_files_runtime
+    command: ["/bin/sh", "/opt/limbo-preflight/core-env.sh"]
     volumes:
       - ./.env:/run/limbo.env:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     restart: "no"
     depends_on: *assets_depends
   limbo-data-migrate:
     image: *image_limbo
     pull_policy: always
-    entrypoint: ["/bin/sh", "/opt/limbo-preflight/migrate-limbo-data.sh"]
+    command: ["/bin/sh", "/opt/limbo-preflight/migrate-limbo-data.sh"]
+    environment:
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/metadata/limbo_data"
     volumes:
-      - limbo_bridge_init_state:/legacy-init-state:ro
-      - limbo_data:/metadata/limbo_data
+      - ${LIMBO_LIMBO_DATA_SOURCE:-${LIMBO_DATA_ROOT:-limbo_data}${LIMBO_DATA_ROOT:+/limbo_data}}:/metadata/limbo_data
     restart: "no"
     depends_on: *assets_depends
   limbo-key-init:
     image: *image_limbo
     pull_policy: always
-    entrypoint: ["python3.14", "/opt/limbo-preflight/init-limbo-key.py"]
+    command: ["python3.14", "/opt/limbo-preflight/init-limbo-key.py"]
+    environment:
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/metadata/limbo_data"
     volumes:
-      - limbo_data:/metadata/limbo_data
+      - ${LIMBO_LIMBO_DATA_SOURCE:-${LIMBO_DATA_ROOT:-limbo_data}${LIMBO_DATA_ROOT:+/limbo_data}}:/metadata/limbo_data
     restart: "no"
     depends_on:
       <<: [*assets_depends, *dep_limbo_data_migrate_completed]
   limbo-musicbrainz-admin-seed:
     image: *image_limbo
     pull_policy: always
-    entrypoint: ["/bin/sh", "/opt/limbo-preflight/seed-musicbrainz-admin.sh"]
+    command: ["/bin/sh", "/opt/limbo-preflight/seed-musicbrainz-admin.sh"]
+    environment:
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/metadata/limbo_data"
     volumes:
-      - limbo_data:/metadata/limbo_data
+      - ${LIMBO_LIMBO_DATA_SOURCE:-${LIMBO_DATA_ROOT:-limbo_data}${LIMBO_DATA_ROOT:+/limbo_data}}:/metadata/limbo_data
     restart: "no"
     depends_on:
       <<: [*assets_depends, *dep_limbo_key_init_completed]
   db:
     image: *image_db
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     logging:
       driver: "json-file"
       options:
@@ -180,12 +207,16 @@ services:
     environment: *env_list_pg_runtime
     shm_size: "${POSTGRES_SHM_SIZE:-4GB}"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ${LIMBO_PGDATA_SOURCE:-${LIMBO_DATA_ROOT:-pgdata}${LIMBO_DATA_ROOT:+/pgdata}}:/var/lib/postgresql/data
     expose:
       - "${LIMBO_MBDB_PORT}"
     depends_on: *assets_depends
   mq:
     image: *image_mq
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     hostname: "mq"
     logging:
       driver: "json-file"
@@ -199,12 +230,16 @@ services:
     ulimits:
       nofile: 65536
     volumes:
-      - mqdata:/var/lib/rabbitmq
+      - ${LIMBO_MQDATA_SOURCE:-${LIMBO_DATA_ROOT:-mqdata}${LIMBO_DATA_ROOT:+/mqdata}}:/var/lib/rabbitmq
     expose:
       - *default_limbo_mq_port
     depends_on: *assets_depends
   redis:
     image: redis:3-alpine
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     logging:
       driver: "json-file"
       options:
@@ -222,7 +257,7 @@ services:
     env_file: *env_files_runtime
     environment: *env_list_pg_runtime
     volumes:
-      - dbdump:/media/dbdump
+      - ${LIMBO_DBDUMP_SOURCE:-${LIMBO_DATA_ROOT:-dbdump}${LIMBO_DATA_ROOT:+/dbdump}}:/media/dbdump
     command: ["bootstrap.sh"]
     restart: "no"
     depends_on:
@@ -235,10 +270,10 @@ services:
     environment:
       - TZ=${TZ:-UTC}
     volumes:
-      - solrdata:/var/solr
-      - solrdump:/var/cache/musicbrainz/solr-backups
-      - solrdump:/var/solr/solr-backups
-      - dbdump:/media/dbdump:ro
+      - ${LIMBO_SOLRDATA_SOURCE:-${LIMBO_DATA_ROOT:-solrdata}${LIMBO_DATA_ROOT:+/solrdata}}:/var/solr
+      - ${LIMBO_SOLRDUMP_SOURCE:-${LIMBO_DATA_ROOT:-solrdump}${LIMBO_DATA_ROOT:+/solrdump}}:/var/cache/musicbrainz/solr-backups
+      - ${LIMBO_SOLRDUMP_SOURCE:-${LIMBO_DATA_ROOT:-solrdump}${LIMBO_DATA_ROOT:+/solrdump}}:/var/solr/solr-backups
+      - ${LIMBO_DBDUMP_SOURCE:-${LIMBO_DATA_ROOT:-dbdump}${LIMBO_DATA_ROOT:+/dbdump}}:/media/dbdump:ro
     ulimits:
       nofile: 65536
     restart: "no"
@@ -246,6 +281,10 @@ services:
       <<: [*assets_depends, *dep_preflight_completed, *dep_bootstrap_completed]
   search:
     image: *image_search
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     mem_limit: *default_search_mem_limit
     logging:
       driver: "json-file"
@@ -264,14 +303,19 @@ services:
     expose:
       - *default_limbo_solr_port
     volumes:
-      - dbdump:/media/dbdump:ro
-      - solrdata:/var/solr
-      - solrdump:/var/cache/musicbrainz/solr-backups
-      - solrdump:/var/solr/solr-backups
+      - ${LIMBO_DBDUMP_SOURCE:-${LIMBO_DATA_ROOT:-dbdump}${LIMBO_DATA_ROOT:+/dbdump}}:/media/dbdump:ro
+      - ${LIMBO_SOLRDATA_SOURCE:-${LIMBO_DATA_ROOT:-solrdata}${LIMBO_DATA_ROOT:+/solrdata}}:/var/solr
+      - ${LIMBO_SOLRDUMP_SOURCE:-${LIMBO_DATA_ROOT:-solrdump}${LIMBO_DATA_ROOT:+/solrdump}}:/var/cache/musicbrainz/solr-backups
+      - ${LIMBO_SOLRDUMP_SOURCE:-${LIMBO_DATA_ROOT:-solrdump}${LIMBO_DATA_ROOT:+/solrdump}}:/var/solr/solr-backups
     depends_on:
       <<: [*assets_depends, *dep_search_bootstrap_completed]
   musicbrainz:
     image: *image_musicbrainz
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.webui: "http://[IP]:[PORT:4820]/"
+      net.unraid.docker.shell: "/bin/sh"
     pull_policy: ${MUSICBRAINZ_PULL_POLICY:-always}
     logging:
       driver: "json-file"
@@ -281,10 +325,10 @@ services:
     ports:
       - "${MUSICBRAINZ_DOCKER_HOST_IPADDRCOL:-}${LIMBO_MBRAINZ_WEB_PORT}:${LIMBO_MBRAINZ_WEB_PORT}"
     volumes:
-      - dbdump:/media/dbdump
-      - solrdump:/var/cache/musicbrainz/solr-backups:ro
-      - limbo_data:/metadata/limbo_data:ro
-      - limbo_data:/opt/limbo-admin:ro
+      - ${LIMBO_DBDUMP_SOURCE:-${LIMBO_DATA_ROOT:-dbdump}${LIMBO_DATA_ROOT:+/dbdump}}:/media/dbdump
+      - ${LIMBO_SOLRDUMP_SOURCE:-${LIMBO_DATA_ROOT:-solrdump}${LIMBO_DATA_ROOT:+/solrdump}}:/var/cache/musicbrainz/solr-backups:ro
+      - ${LIMBO_LIMBO_DATA_SOURCE:-${LIMBO_DATA_ROOT:-limbo_data}${LIMBO_DATA_ROOT:+/limbo_data}}:/metadata/limbo_data:ro
+      - ${LIMBO_LIMBO_DATA_SOURCE:-${LIMBO_DATA_ROOT:-limbo_data}${LIMBO_DATA_ROOT:+/limbo_data}}:/opt/limbo-admin:ro
       - type: bind
         source: ./admin/.limbo/runtime
         target: /run/limbo-runtime
@@ -319,6 +363,10 @@ services:
         ]
   indexer:
     image: *image_indexer
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     environment: *env_list_pg_runtime
     logging:
       driver: "json-file"
@@ -326,26 +374,51 @@ services:
         max-size: "10m"
         max-file: "10"
     volumes:
-      - dbdump:/media/dbdump
+      - ${LIMBO_DBDUMP_SOURCE:-${LIMBO_DATA_ROOT:-dbdump}${LIMBO_DATA_ROOT:+/dbdump}}:/media/dbdump
     depends_on:
       <<:
         [*assets_depends, *dep_db_started, *dep_mq_started, *dep_search_started]
   indexer-cron:
     image: *image_indexer
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     env_file: *env_files_runtime
-    environment: *env_list_pg_runtime
+    environment:
+      TZ: *default_tz
+      LIMBO_MBDB_PORT: *default_limbo_mbdb_port
+      LIMBO_MQ_PORT: *default_limbo_mq_port
+      POSTGRES_USER: *default_mb_db_user
+      POSTGRES_PASSWORD: *default_mb_db_password
+      PGPORT: *default_limbo_mbdb_port
+      POSTGRES_PORT: *default_limbo_mbdb_port
+      MB_DB_PORT: *default_limbo_mbdb_port
+      DB_PORT: *default_limbo_mbdb_port
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/media/dbdump"
     volumes:
-      - dbdump:/media/dbdump
-    command: ["/usr/local/bin/indexer-cron.sh"]
+      - ${LIMBO_DBDUMP_SOURCE:-${LIMBO_DATA_ROOT:-dbdump}${LIMBO_DATA_ROOT:+/dbdump}}:/media/dbdump
+    command:
+      [
+        "/usr/local/bin/indexer-runtime-user.sh",
+        "/usr/local/bin/indexer-cron.sh",
+      ]
     restart: unless-stopped
     depends_on:
       <<: [*assets_depends, *dep_db_started, *dep_search_started]
   limbo-init:
     image: *image_limbo
     pull_policy: always
-    entrypoint: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
+    command: ["/bin/bash", "/metadata/init/init-mbdb.sh"]
     environment:
       TZ: *default_tz
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/metadata/limbo_data"
       MB_DB_HOST: *default_mb_db_host
       MB_DB_PORT: *default_mb_db_port
       MB_DB_USER: *default_mb_db_user
@@ -361,15 +434,24 @@ services:
       <<: [*assets_depends, *dep_db_started, *dep_bootstrap_completed]
   limbo-host-helper:
     image: *image_limbo
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     pull_policy: always
+    # Host mode remains intentional: helper performs host-level storage/network discovery.
     network_mode: host
-    entrypoint: ["python3.14", "-m", "metadata_srv.storage_discovery_helper"]
+    command: ["python3.14", "-m", "metadata_srv.storage_discovery_helper"]
     env_file: *env_files_runtime
     environment:
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/metadata/limbo_data /run/limbo-runtime"
       LIMBO_HOST_HELPER_PORT: *default_limbo_host_helper_port
       LIMBO_SECRET_MASTER_KEY: "${LIMBO_SECRET_MASTER_KEY:-}"
     volumes:
-      - limbo_data:/metadata/limbo_data
+      - ${LIMBO_LIMBO_DATA_SOURCE:-${LIMBO_DATA_ROOT:-limbo_data}${LIMBO_DATA_ROOT:+/limbo_data}}:/metadata/limbo_data
       - /var/run/docker.sock:/var/run/docker.sock
       - type: bind
         source: ./admin/.limbo/runtime
@@ -380,36 +462,32 @@ services:
     depends_on: *assets_depends
   limbo-dldr:
     image: *image_dldr
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     pull_policy: always
     container_name: limbo-dldr
     hostname: limbo-dldr
     restart: unless-stopped
     command: ["${DLDR_COMMAND:-/app/scripts/DLDR-start.core.sh}"]
-    ports:
-      - "${LIMBO_DLDR_API_PORT}:${LIMBO_DLDR_API_PORT}"
     environment:
-      - TZ=${TZ:-UTC}
-      - DLDR_LOG_LEVEL=${DLDR_LOG_LEVEL:-INFO}
-      - DLDR_WEB_PORT=${LIMBO_DLDR_API_PORT}
-      - DLDR_API_KEY=${DLDR_API_KEY:-dldr-default-key-change-me}
-      - DLDR_STARTUP_STAGER=${DLDR_STARTUP_STAGER:-true}
-      - DLDR_STARTUP_SEARCH=${DLDR_STARTUP_SEARCH:-true}
-      - DLDR_STARTUP_DOWNLOADER=${DLDR_STARTUP_DOWNLOADER:-true}
-      - DLDR_STARTUP_IMPORTER=${DLDR_STARTUP_IMPORTER:-true}
-      # Optional env seed for integration settings (API settings take precedence)
-      - DLDR_INTEGRATION_LIDARR_HOST_URL=${DLDR_INTEGRATION_LIDARR_HOST_URL:-}
-      - DLDR_INTEGRATION_LIDARR_API_KEY=${DLDR_INTEGRATION_LIDARR_API_KEY:-}
-      - DLDR_SUB_FOLDER=${DLDR_SUB_FOLDER:-Limbo_DLDR}
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/data"
+    ports:
+      - "${LIMBO_DLDR_API_PORT}:4812"
     volumes:
-      - dldr_data:/data
-      - type: bind
-        source: ./admin/.limbo/dldr-downloads
-        target: /downloads
-        bind:
-          create_host_path: true
+      - ${LIMBO_DLDR_DATA_SOURCE:-${LIMBO_DATA_ROOT:-dldr_data}${LIMBO_DATA_ROOT:+/dldr_data}}:/data
     depends_on: *assets_depends
   limbo:
     image: *image_limbo
+    labels:
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.webui: "http://[IP]:[PORT:4808]/"
+      net.unraid.docker.shell: "/bin/bash"
     pull_policy: always
     cap_add:
       - SYS_ADMIN
@@ -419,8 +497,8 @@ services:
     ports:
       - "${LIMBO_PORT}:${LIMBO_PORT}"
     volumes:
-      - limbo_data:/metadata/limbo_data
-      - dbdump:/media/dbdump:ro
+      - ${LIMBO_LIMBO_DATA_SOURCE:-${LIMBO_DATA_ROOT:-limbo_data}${LIMBO_DATA_ROOT:+/limbo_data}}:/metadata/limbo_data
+      - ${LIMBO_DBDUMP_SOURCE:-${LIMBO_DATA_ROOT:-dbdump}${LIMBO_DATA_ROOT:+/dbdump}}:/media/dbdump:ro
       - ./admin/.limbo/assets/LIMBO_TAG_VERSION:/limbo/VERSION:ro
       - /var/run/docker.sock:/var/run/docker.sock
       - type: bind
@@ -438,6 +516,10 @@ services:
     env_file: *env_files_runtime
     environment:
       TZ: *default_tz
+      LIMBO_UID: *default_limbo_uid
+      LIMBO_GID: *default_limbo_gid
+      LIMBO_UMASK: *default_limbo_umask
+      LIMBO_WRITE_PATHS: "/metadata/limbo_data"
       LIMBO_REDIS_PORT: *default_limbo_redis_port
       POSTGRES_CACHE_HOST: *default_mb_db_host
       POSTGRES_CACHE_PORT: *default_mb_db_port
