@@ -1,4 +1,4 @@
-#   Limbo 1.9.420.1290
+#   Limbo 1.9.420.1293
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -105,7 +105,7 @@ x-env-lists:
     - *default_env_pg_password
 x-labels:
   managed_version: &managed_version_labels
-    com.limbo.publish.version: "${LIMBO_DEPLOY_VERSION:-1.9.420.1290}"
+    com.limbo.publish.version: "${LIMBO_DEPLOY_VERSION:-1.9.420.1293}"
 volumes:
   pgdata:
     driver: local
@@ -136,7 +136,7 @@ services:
     labels: *managed_version_labels
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1290
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1293
     volumes:
       - ./:/out
     restart: "no"
@@ -170,6 +170,47 @@ services:
       - ${LIMBO_DLDR_DATA_SOURCE:-${LIMBO_DATA_ROOT:-dldr_data}${LIMBO_DATA_ROOT:+/dldr_data}}:/ownership/dldr_data
     restart: "no"
     depends_on: *assets_depends
+  version-report:
+    image: *image_limbo
+    labels: *managed_version_labels
+    pull_policy: always
+    command: ["python3.14", "/opt/limbo-preflight/report-image-versions.py"]
+    environment:
+      COMPOSE_PROJECT_NAME: "${COMPOSE_PROJECT_NAME:-limbo}"
+      LIMBO_CHANNEL: "${LIMBO_CHANNEL:-latest}"
+      LIMBO_DEPLOY_VERSION: "${LIMBO_DEPLOY_VERSION:-1.9.420.1293}"
+      LIMBO_IMAGE_REF: *image_limbo
+      LIMBO_ASSETS_IMAGE_REF: *image_assets
+      LIMBO_DB_IMAGE_REF: *image_db
+      LIMBO_MQ_IMAGE_REF: *image_mq
+      LIMBO_REDIS_IMAGE_REF: *image_redis
+      LIMBO_BOOTSTRAP_IMAGE_REF: *image_bootstrap
+      LIMBO_MUSICBRAINZ_IMAGE_REF: *image_musicbrainz
+      LIMBO_SEARCH_IMAGE_REF: *image_search
+      LIMBO_INDEXER_IMAGE_REF: *image_indexer
+      LIMBO_DLDR_IMAGE_REF: *image_dldr
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: "no"
+    depends_on:
+      <<: [*assets_depends, *dep_preflight_completed]
+  version-marker:
+    image: *image_limbo
+    labels: *managed_version_labels
+    pull_policy: always
+    container_name: "Version-${LIMBO_DEPLOY_VERSION:-1.9.420.1293}"
+    command:
+      [
+        "/bin/sh",
+        "-lc",
+        "echo \"[version-marker] Limbo version ${LIMBO_DEPLOY_VERSION:-1.9.420.1293} channel=${LIMBO_CHANNEL:-latest}\"",
+      ]
+    environment:
+      LIMBO_CHANNEL: "${LIMBO_CHANNEL:-latest}"
+      LIMBO_DEPLOY_VERSION: "${LIMBO_DEPLOY_VERSION:-1.9.420.1293}"
+    restart: "no"
+    depends_on:
+      <<: [*assets_depends, *dep_preflight_completed]
   limbo-data-migrate:
     image: *image_limbo
     labels: *managed_version_labels
