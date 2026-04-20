@@ -1,4 +1,4 @@
-#   Limbo 1.9.420.1284
+#   Limbo 1.9.420.1285
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -131,7 +131,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1284
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1285
     volumes:
       - ./:/out
     restart: "no"
@@ -277,13 +277,6 @@ services:
       - *default_env_mq_port
       - *default_env_pg_user
       - *default_env_pg_password
-      # Upstream bootstrap compatibility bridge:
-      # keep canonical source LIMBO_MBDB_PORT while exporting legacy port envs
-      # only for this service.
-      - PGPORT=${LIMBO_MBDB_PORT:-4818}
-      - POSTGRES_PORT=${LIMBO_MBDB_PORT:-4818}
-      - MB_DB_PORT=${LIMBO_MBDB_PORT:-4818}
-      - DB_PORT=${LIMBO_MBDB_PORT:-4818}
     volumes:
       - ${LIMBO_DBDUMP_SOURCE:-${LIMBO_DATA_ROOT:-dbdump}${LIMBO_DATA_ROOT:+/dbdump}}:/media/dbdump
     command: ["bootstrap.sh"]
