@@ -1,4 +1,4 @@
-#   Limbo 1.9.419.1278
+#   Limbo 1.9.419.1279
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -95,10 +95,6 @@ x-default-env-items:
   mq_port: &default_env_mq_port "LIMBO_MQ_PORT=${LIMBO_MQ_PORT}"
   pg_user: &default_env_pg_user "POSTGRES_USER=${LIMBO_MBDB_USER:-musicbrainz}"
   pg_password: &default_env_pg_password "POSTGRES_PASSWORD=${LIMBO_MBDB_PASSWORD:-musicbrainz}"
-  pg_port: &default_env_pg_port "PGPORT=${LIMBO_MBDB_PORT}"
-  postgres_port: &default_env_postgres_port "POSTGRES_PORT=${LIMBO_MBDB_PORT}"
-  mb_db_port: &default_env_mb_db_port "MB_DB_PORT=${LIMBO_MBDB_PORT}"
-  db_port: &default_env_db_port "DB_PORT=${LIMBO_MBDB_PORT}"
 x-env-lists:
   pg_runtime: &env_list_pg_runtime
     - *default_env_tz
@@ -106,10 +102,6 @@ x-env-lists:
     - *default_env_mq_port
     - *default_env_pg_user
     - *default_env_pg_password
-    - *default_env_pg_port
-    - *default_env_postgres_port
-    - *default_env_mb_db_port
-    - *default_env_db_port
 volumes:
   pgdata:
     driver: local
@@ -136,7 +128,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.419.1278
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.419.1279
     volumes:
       - ./:/out
     restart: "no"
@@ -265,6 +257,9 @@ services:
   search-bootstrap:
     image: *image_search
     entrypoint: ["/usr/local/bin/bootstrap-indexes.sh"]
+    # Run bootstrap as root so permission self-repair in bootstrap-indexes.sh can
+    # fix bind-mounted solrdata/solrdump ownership on Unraid appdata paths.
+    user: "0:0"
     mem_limit: *default_search_bootstrap_mem_limit
     env_file: *env_files_runtime
     environment:
@@ -297,7 +292,6 @@ services:
     environment:
       - *default_env_tz
       - SOLR_HEAP=${SOLR_HEAP:-4g}
-      - SOLR_PORT=${LIMBO_SOLR_PORT}
       - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
     command: ["solr-foreground", "--cloud", "-p", "${LIMBO_SOLR_PORT}"]
     expose:
@@ -391,10 +385,6 @@ services:
       LIMBO_MQ_PORT: *default_limbo_mq_port
       POSTGRES_USER: *default_mb_db_user
       POSTGRES_PASSWORD: *default_mb_db_password
-      PGPORT: *default_limbo_mbdb_port
-      POSTGRES_PORT: *default_limbo_mbdb_port
-      MB_DB_PORT: *default_limbo_mbdb_port
-      DB_PORT: *default_limbo_mbdb_port
       LIMBO_UID: *default_limbo_uid
       LIMBO_GID: *default_limbo_gid
       LIMBO_UMASK: *default_limbo_umask
@@ -420,7 +410,7 @@ services:
       LIMBO_UMASK: *default_limbo_umask
       LIMBO_WRITE_PATHS: "/metadata/limbo_data"
       MB_DB_HOST: *default_mb_db_host
-      MB_DB_PORT: *default_mb_db_port
+      LIMBO_MBDB_PORT: *default_limbo_mbdb_port
       MB_DB_USER: *default_mb_db_user
       MB_DB_PASSWORD: *default_mb_db_password
       LIMBO_MBDB_USER: *default_mb_db_user
@@ -441,13 +431,11 @@ services:
     pull_policy: always
     # Host mode remains intentional: helper performs host-level storage/network discovery.
     network_mode: host
-    command: ["python3.14", "-m", "metadata_srv.storage_discovery_helper"]
+    # Bypass runtime UID remap wrapper for helper so it can always write
+    # /run/limbo-runtime/host-ip.env on host-mounted runtime paths.
+    entrypoint: ["python3.14", "-m", "metadata_srv.storage_discovery_helper"]
     env_file: *env_files_runtime
     environment:
-      LIMBO_UID: *default_limbo_uid
-      LIMBO_GID: *default_limbo_gid
-      LIMBO_UMASK: *default_limbo_umask
-      LIMBO_WRITE_PATHS: "/metadata/limbo_data /run/limbo-runtime"
       LIMBO_HOST_HELPER_PORT: *default_limbo_host_helper_port
       LIMBO_SECRET_MASTER_KEY: "${LIMBO_SECRET_MASTER_KEY:-}"
     volumes:
@@ -522,7 +510,7 @@ services:
       LIMBO_WRITE_PATHS: "/metadata/limbo_data"
       LIMBO_REDIS_PORT: *default_limbo_redis_port
       POSTGRES_CACHE_HOST: *default_mb_db_host
-      POSTGRES_CACHE_PORT: *default_mb_db_port
+      LIMBO_MBDB_PORT: *default_limbo_mbdb_port
       LIMBO_ADMIN_BASE_URL: "http://musicbrainz:${LIMBO_ADMIN_PORT}"
       LIMBO_VERSION_FILE: "/limbo/VERSION"
       # --- MusicBrainz DB creds (set these to match your mirror) ---

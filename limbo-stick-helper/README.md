@@ -53,7 +53,7 @@ curl -sS -X POST "http://localhost:4810/api/run" \
 
 ## Stick: DB Scope (direct DB mode)
 
-Use this when API mode if you need to force Lidarr to your will
+Use this when API mode just isn't enough, and you need to force Lidarr to your will
 
 Turn on DB scope by sending `"db": true`.
 
