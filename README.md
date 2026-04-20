@@ -114,7 +114,7 @@ docker compose logs -f --no-log-prefix --tail=200 \
 
 > [!TIP]
 >
-> Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own (sub)domains to reach Limbo and MusicBrainz locally on port 80 (HTTP) or 443 (HTTPS) (requries a unique host name per service, like limbo.yourdomain.net and mbrainz.yourdomain.net)
+> Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own domain to reach Limbo and MusicBrainz locally on port 80 (HTTP) or 443 (HTTPS) example: limbo.domain.net and mbrainz.domain.net
 
 ### Updating
 
