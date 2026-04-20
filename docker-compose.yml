@@ -1,4 +1,4 @@
-#   Limbo 1.9.419.1279
+#   Limbo 1.9.420.1280
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -75,9 +75,9 @@ x-default-values:
   limbo_solr_port: &default_limbo_solr_port "${LIMBO_SOLR_PORT}"
   search_mem_limit: &default_search_mem_limit "${SEARCH_MEM_LIMIT:-8g}"
   search_bootstrap_mem_limit: &default_search_bootstrap_mem_limit "${SEARCH_BOOTSTRAP_MEM_LIMIT:-8g}"
-  limbo_mbdb_port: &default_limbo_mbdb_port "${LIMBO_MBDB_PORT}"
+  limbo_mbdb_port: &default_limbo_mbdb_port "${LIMBO_MBDB_PORT:-4818}"
   mb_db_host: &default_mb_db_host "${MB_DB_HOST:-db}"
-  mb_db_port: &default_mb_db_port "${LIMBO_MBDB_PORT}"
+  mb_db_port: &default_mb_db_port "${LIMBO_MBDB_PORT:-4818}"
   mb_db_user: &default_mb_db_user "${LIMBO_MBDB_USER:-musicbrainz}"
   mb_db_password: &default_mb_db_password "${LIMBO_MBDB_PASSWORD:-musicbrainz}"
   mb_db_name: &default_mb_db_name "${MB_DB_NAME:-musicbrainz_db}"
@@ -91,7 +91,7 @@ x-default-values:
   limbo_network_external: &default_limbo_network_external "${LIMBO_NETWORK_EXTERNAL:-false}"
 x-default-env-items:
   tz: &default_env_tz "TZ=${TZ:-UTC}"
-  mbdb_port: &default_env_mbdb_port "LIMBO_MBDB_PORT=${LIMBO_MBDB_PORT}"
+  mbdb_port: &default_env_mbdb_port "LIMBO_MBDB_PORT=${LIMBO_MBDB_PORT:-4818}"
   mq_port: &default_env_mq_port "LIMBO_MQ_PORT=${LIMBO_MQ_PORT}"
   pg_user: &default_env_pg_user "POSTGRES_USER=${LIMBO_MBDB_USER:-musicbrainz}"
   pg_password: &default_env_pg_password "POSTGRES_PASSWORD=${LIMBO_MBDB_PASSWORD:-musicbrainz}"
@@ -128,7 +128,7 @@ services:
     image: *image_assets
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.419.1279
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1280
     volumes:
       - ./:/out
     restart: "no"
@@ -195,13 +195,13 @@ services:
         max-size: "10m"
         max-file: "10"
     restart: unless-stopped
-    command: postgres -c "port=${LIMBO_MBDB_PORT}" -c "shared_buffers=${POSTGRES_SHARED_BUFFERS:-4GB}" -c "shared_preload_libraries=pg_amqp.so"
+    command: postgres -c "port=${LIMBO_MBDB_PORT:-4818}" -c "shared_buffers=${POSTGRES_SHARED_BUFFERS:-4GB}" -c "shared_preload_libraries=pg_amqp.so"
     environment: *env_list_pg_runtime
     shm_size: "${POSTGRES_SHM_SIZE:-4GB}"
     volumes:
       - ${LIMBO_PGDATA_SOURCE:-${LIMBO_DATA_ROOT:-pgdata}${LIMBO_DATA_ROOT:+/pgdata}}:/var/lib/postgresql/data
     expose:
-      - "${LIMBO_MBDB_PORT}"
+      - "${LIMBO_MBDB_PORT:-4818}"
     depends_on: *assets_depends
   mq:
     image: *image_mq
