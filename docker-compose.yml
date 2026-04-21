@@ -1,4 +1,4 @@
-#   Limbo 1.9.421.1320
+#   Limbo 1.9.421.1321
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -89,7 +89,7 @@ x-env-lists:
     - *default_env_pg_password
 x-labels:
   managed_version: &managed_version_labels
-    com.limbo.publish.version: "1.9.421.1320"
+    com.limbo.publish.version: "1.9.421.1321"
 volumes:
   pgdata:
     driver: local
@@ -117,6 +117,7 @@ networks:
 services:
   assets:
     image: *image_assets
+    user: "0:0"
     labels:
       <<: *managed_version_labels
       net.unraid.docker.managed: "composeman"
@@ -124,7 +125,7 @@ services:
       net.unraid.docker.shell: "/bin/sh"
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.421.1320
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.421.1321
     volumes:
       - ./:/out
     restart: "no"
@@ -151,6 +152,7 @@ services:
       LIMBO_GID: *default_limbo_gid
       LIMBO_UMASK: *default_limbo_umask
       LIMBO_WRITE_PATHS: "/metadata/limbo_data"
+      LIMBO_FORCE_ROOT: "1"
       LIMBO_POLICY_UID: "${LIMBO_UID:-${PUID:-99}}"
       LIMBO_POLICY_GID: "${LIMBO_GID:-${PGID:-100}}"
       LIMBO_PGDATA_UID: "${LIMBO_PGDATA_UID:-999}"
@@ -255,6 +257,7 @@ services:
       <<: [*assets_depends]
   bootstrap:
     image: *image_bootstrap
+    user: "0:0"
     labels:
       <<: *managed_version_labels
       net.unraid.docker.managed: "composeman"
@@ -275,6 +278,7 @@ services:
       <<: [*assets_depends, *dep_db_started]
   search:
     image: *image_search
+    user: "0:0"
     labels:
       <<: *managed_version_labels
       net.unraid.docker.managed: "composeman"
@@ -359,6 +363,7 @@ services:
         ]
   indexer-cron:
     image: *image_indexer
+    user: "0:0"
     labels:
       <<: *managed_version_labels
       net.unraid.docker.managed: "composeman"
@@ -478,7 +483,7 @@ services:
       POSTGRES_CACHE_HOST: *default_mb_db_host
       LIMBO_MBDB_PORT: *default_limbo_mbdb_port
       LIMBO_ADMIN_BASE_URL: "http://musicbrainz:${LIMBO_ADMIN_PORT}"
-      LIMBO_DEPLOY_VERSION: "1.9.421.1320"
+      LIMBO_DEPLOY_VERSION: "1.9.421.1321"
       LIMBO_VERSION_FILE: "/limbo/VERSION"
       LIMBO_STARTUP_LOCK_DIR: "/tmp/limbo-startup-locks"
       # --- MusicBrainz DB creds (set these to match your mirror) ---
