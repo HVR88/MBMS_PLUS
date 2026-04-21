@@ -1,4 +1,4 @@
-#   Limbo 1.9.420.1313
+#   Limbo 1.9.421.1314
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -89,7 +89,7 @@ x-env-lists:
     - *default_env_pg_password
 x-labels:
   managed_version: &managed_version_labels
-    com.limbo.publish.version: "1.9.420.1313"
+    com.limbo.publish.version: "1.9.421.1314"
 volumes:
   pgdata:
     driver: local
@@ -120,7 +120,7 @@ services:
     labels: *managed_version_labels
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1313
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.421.1314
     volumes:
       - ./:/out
     restart: "no"
@@ -272,9 +272,6 @@ services:
       options:
         max-size: "10m"
         max-file: "10"
-    # Run startup as root so Solr init scripts can always write /var/solr/data/solr.xml
-    # on Unraid bind mounts; solr-foreground handles normal runtime launch internally.
-    user: "0:0"
     ulimits:
       nofile: 65536
     restart: unless-stopped
@@ -286,7 +283,7 @@ services:
       [
         "/bin/sh",
         "-lc",
-        "mkdir -p /var/solr/data /var/solr/logs /var/solr/solr-backups /var/cache/musicbrainz/solr-backups; chown -R 8983:8983 /var/solr /var/cache/musicbrainz/solr-backups 2>/dev/null || true; chmod -R u+rwX,g+rwX /var/solr /var/cache/musicbrainz/solr-backups 2>/dev/null || true; /usr/local/bin/bootstrap-indexes.sh; exec solr-foreground --cloud --force -p ${LIMBO_SOLR_PORT:-4817}",
+        "mkdir -p /var/solr/data /var/solr/logs /var/solr/solr-backups /var/cache/musicbrainz/solr-backups; chown -R 8983:8983 /var/solr /var/cache/musicbrainz/solr-backups 2>/dev/null || true; chmod -R u+rwX,g+rwX /var/solr /var/cache/musicbrainz/solr-backups 2>/dev/null || true; /usr/local/bin/bootstrap-indexes.sh; exec solr-foreground --cloud -p ${LIMBO_SOLR_PORT:-4817}",
       ]
     expose:
       - *default_limbo_solr_port
@@ -367,7 +364,6 @@ services:
       LIMBO_WRITE_PATHS: "/media/dbdump"
     volumes:
       - ${LIMBO_DBDUMP_SOURCE:-${LIMBO_DATA_ROOT:-dbdump}${LIMBO_DATA_ROOT:+/dbdump}}:/media/dbdump
-    user: "0:0"
     command:
       [
         "/bin/sh",
@@ -469,7 +465,7 @@ services:
       POSTGRES_CACHE_HOST: *default_mb_db_host
       LIMBO_MBDB_PORT: *default_limbo_mbdb_port
       LIMBO_ADMIN_BASE_URL: "http://musicbrainz:${LIMBO_ADMIN_PORT}"
-      LIMBO_DEPLOY_VERSION: "1.9.420.1313"
+      LIMBO_DEPLOY_VERSION: "1.9.421.1314"
       LIMBO_VERSION_FILE: "/limbo/VERSION"
       LIMBO_STARTUP_LOCK_DIR: "/tmp/limbo-startup-locks"
       # --- MusicBrainz DB creds (set these to match your mirror) ---
