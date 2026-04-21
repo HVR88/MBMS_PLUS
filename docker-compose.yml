@@ -1,4 +1,4 @@
-#   Limbo 1.9.421.1315
+#   Limbo 1.9.421.1316
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -89,7 +89,7 @@ x-env-lists:
     - *default_env_pg_password
 x-labels:
   managed_version: &managed_version_labels
-    com.limbo.publish.version: "1.9.421.1315"
+    com.limbo.publish.version: "1.9.421.1316"
 volumes:
   pgdata:
     driver: local
@@ -117,16 +117,24 @@ networks:
 services:
   assets:
     image: *image_assets
-    labels: *managed_version_labels
+    labels:
+      <<: *managed_version_labels
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.421.1315
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.421.1316
     volumes:
       - ./:/out
     restart: "no"
   limbo-system-init:
     image: *image_limbo
-    labels: *managed_version_labels
+    labels:
+      <<: *managed_version_labels
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     pull_policy: always
     env_file: *env_files_runtime
     command:
@@ -246,7 +254,11 @@ services:
       <<: [*assets_depends]
   bootstrap:
     image: *image_bootstrap
-    labels: *managed_version_labels
+    labels:
+      <<: *managed_version_labels
+      net.unraid.docker.managed: "composeman"
+      net.unraid.docker.icon: "http://[IP]:[PORT:4808]/assets/images/limbo-icon.png"
+      net.unraid.docker.shell: "/bin/sh"
     env_file: *env_files_runtime
     environment:
       - *default_env_tz
@@ -465,7 +477,7 @@ services:
       POSTGRES_CACHE_HOST: *default_mb_db_host
       LIMBO_MBDB_PORT: *default_limbo_mbdb_port
       LIMBO_ADMIN_BASE_URL: "http://musicbrainz:${LIMBO_ADMIN_PORT}"
-      LIMBO_DEPLOY_VERSION: "1.9.421.1315"
+      LIMBO_DEPLOY_VERSION: "1.9.421.1316"
       LIMBO_VERSION_FILE: "/limbo/VERSION"
       LIMBO_STARTUP_LOCK_DIR: "/tmp/limbo-startup-locks"
       # --- MusicBrainz DB creds (set these to match your mirror) ---
