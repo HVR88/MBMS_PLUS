@@ -1,4 +1,4 @@
-#   Limbo 1.9.420.1301
+#   Limbo 1.9.420.1302
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -105,7 +105,7 @@ x-env-lists:
     - *default_env_pg_password
 x-labels:
   managed_version: &managed_version_labels
-    com.limbo.publish.version: "1.9.420.1301"
+    com.limbo.publish.version: "1.9.420.1302"
 volumes:
   pgdata:
     driver: local
@@ -136,7 +136,7 @@ services:
     labels: *managed_version_labels
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1301
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1302
     volumes:
       - ./:/out
     restart: "no"
@@ -178,7 +178,7 @@ services:
     environment:
       COMPOSE_PROJECT_NAME: "${COMPOSE_PROJECT_NAME:-limbo}"
       LIMBO_CHANNEL: "${LIMBO_CHANNEL:-latest}"
-      LIMBO_DEPLOY_VERSION: "1.9.420.1301"
+      LIMBO_DEPLOY_VERSION: "1.9.420.1302"
       LIMBO_IMAGE_REF: *image_limbo
       LIMBO_ASSETS_IMAGE_REF: *image_assets
       LIMBO_DB_IMAGE_REF: *image_db
@@ -198,16 +198,16 @@ services:
     image: *image_limbo
     labels: *managed_version_labels
     pull_policy: always
-    container_name: "Version-1.9.420.1301"
+    container_name: "Version-1.9.420.1302"
     command:
       [
         "/bin/sh",
         "-lc",
-        "echo \"[version-marker] Limbo version 1.9.420.1301 channel=${LIMBO_CHANNEL:-latest}\"",
+        "echo \"[version-marker] Limbo version 1.9.420.1302 channel=${LIMBO_CHANNEL:-latest}\"",
       ]
     environment:
       LIMBO_CHANNEL: "${LIMBO_CHANNEL:-latest}"
-      LIMBO_DEPLOY_VERSION: "1.9.420.1301"
+      LIMBO_DEPLOY_VERSION: "1.9.420.1302"
     restart: "no"
     depends_on:
       <<: [*assets_depends, *dep_preflight_completed]
@@ -606,6 +606,7 @@ services:
       POSTGRES_CACHE_HOST: *default_mb_db_host
       LIMBO_MBDB_PORT: *default_limbo_mbdb_port
       LIMBO_ADMIN_BASE_URL: "http://musicbrainz:${LIMBO_ADMIN_PORT}"
+      LIMBO_DEPLOY_VERSION: "1.9.420.1302"
       LIMBO_VERSION_FILE: "/limbo/VERSION"
       LIMBO_STARTUP_LOCK_DIR: "/tmp/limbo-startup-locks"
       # --- MusicBrainz DB creds (set these to match your mirror) ---
