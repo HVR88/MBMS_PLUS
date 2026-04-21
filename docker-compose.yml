@@ -1,4 +1,4 @@
-#   Limbo 1.9.420.1300
+#   Limbo 1.9.420.1301
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -105,7 +105,7 @@ x-env-lists:
     - *default_env_pg_password
 x-labels:
   managed_version: &managed_version_labels
-    com.limbo.publish.version: "1.9.420.1300"
+    com.limbo.publish.version: "1.9.420.1301"
 volumes:
   pgdata:
     driver: local
@@ -136,7 +136,7 @@ services:
     labels: *managed_version_labels
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1300
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.420.1301
     volumes:
       - ./:/out
     restart: "no"
@@ -178,7 +178,7 @@ services:
     environment:
       COMPOSE_PROJECT_NAME: "${COMPOSE_PROJECT_NAME:-limbo}"
       LIMBO_CHANNEL: "${LIMBO_CHANNEL:-latest}"
-      LIMBO_DEPLOY_VERSION: "1.9.420.1300"
+      LIMBO_DEPLOY_VERSION: "1.9.420.1301"
       LIMBO_IMAGE_REF: *image_limbo
       LIMBO_ASSETS_IMAGE_REF: *image_assets
       LIMBO_DB_IMAGE_REF: *image_db
@@ -198,16 +198,16 @@ services:
     image: *image_limbo
     labels: *managed_version_labels
     pull_policy: always
-    container_name: "Version-1.9.420.1300"
+    container_name: "Version-1.9.420.1301"
     command:
       [
         "/bin/sh",
         "-lc",
-        "echo \"[version-marker] Limbo version 1.9.420.1300 channel=${LIMBO_CHANNEL:-latest}\"",
+        "echo \"[version-marker] Limbo version 1.9.420.1301 channel=${LIMBO_CHANNEL:-latest}\"",
       ]
     environment:
       LIMBO_CHANNEL: "${LIMBO_CHANNEL:-latest}"
-      LIMBO_DEPLOY_VERSION: "1.9.420.1300"
+      LIMBO_DEPLOY_VERSION: "1.9.420.1301"
     restart: "no"
     depends_on:
       <<: [*assets_depends, *dep_preflight_completed]
@@ -379,7 +379,12 @@ services:
       - *default_env_tz
       - SOLR_HEAP=${SOLR_HEAP:-4g}
       - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
-    command: ["solr-foreground", "--cloud", "-p", "${LIMBO_SOLR_PORT:-4817}"]
+    command:
+      [
+        "/bin/sh",
+        "-lc",
+        "mkdir -p /var/solr/data /var/solr/logs /var/solr/solr-backups /var/cache/musicbrainz/solr-backups; chown -R 8983:8983 /var/solr /var/cache/musicbrainz/solr-backups 2>/dev/null || true; chmod -R u+rwX,g+rwX /var/solr /var/cache/musicbrainz/solr-backups 2>/dev/null || true; exec solr-foreground --cloud -p ${LIMBO_SOLR_PORT:-4817}",
+      ]
     expose:
       - *default_limbo_solr_port
     volumes:
