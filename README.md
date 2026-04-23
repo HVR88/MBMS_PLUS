@@ -80,13 +80,13 @@ cp example.env .env
 
 Configure this variable in the .env file:
 
-- Set **`MUSICBRAINZ_REPLICATION_TOKEN`** (get from https://metabrainz.org/profile)
+- Set **`MUSICBRAINZ_REPLICATION_TOKEN`** (get yours from https://metabrainz.org/profile)
 
 ### 4. Download containers, build DB & start up (!) _This takes 2-4 hours_
 
 > [!TIP]
 >
-> Use _screen_ or _tmux_ so the compose process can continue running if the terminal session drops, window closes, computer goes to sleep, etc.
+> Use _screen_ or _tmux_ so the installation can continue running if the terminal session drops, window closes, computer goes to sleep, etc.
 
 ```bash
 screen -S limbo-install
