@@ -42,6 +42,17 @@ Other features are currently in development or testing. Update notifications are
 
 ## Quick Start
 
+### 0. Preparation
+
+Linux Host:
+
+- Make sure you have _curl_ and _screen_ (or _tmux_) installed on your host
+
+UNRAID:
+
+- Install the Compose Manager Plus plugin from Community Apps
+- You will now see a _Compose_ tab on the Docker page
+
 ### 1. Register for MusicBrainz access & token
 
 - Create an account at https://MusicBrainz.com
@@ -69,54 +80,63 @@ cp example.env .env
 
 Configure this variable in the .env file:
 
-- Set **`MUSICBRAINZ_REPLICATION_TOKEN`** (get from https://metabrainz.org/profile)
-
-> [!TIP]
->
-> When deploying from a terminal, use _screen_ or _tmux_ so the compose process can continue running if your session drops (closing the window, computer goes to sleep, etc.)
+- Set **`MUSICBRAINZ_REPLICATION_TOKEN`** (get yours from https://metabrainz.org/profile)
 
 ### 4. Download containers, build DB & start up (!) _This takes 2-4 hours_
 
+> [!TIP]
+>
+> Use _screen_ or _tmux_ so the installation can continue running if the terminal session drops, window closes, computer goes to sleep, etc.
+
+```bash
+screen -S limbo-install
 ```
+
+```
+docker compose pull
 docker compose up -d
 ```
+
+Now type **ctrl-a** and then **d** to detach from the screen session.
+
+Close the terminal and monitor progress from Limbo: **http://LIMBO_HOST_IP:4808**
+
+<p align="center">
+  <img src="https://github.com/HVR88/Docs-Extras/blob/master/limbo-install-screen.png?raw=true" alt="Limbo Installation" width="600" />
+</p>
 
 ### 5. Install Limbo Stick next to Lidarr
 
 On your Lidarr host or Docker platform, install the Limbo Stick container next to Lidarr.
 
+```bash
+mkdir -p /opt/docker/limbo-stick
+cd /opt/docker/limbo-stick
+curl -fsSL -o limbostick-latest.zip https://github.com/HVR88/Limbo/releases/latest/download/limbostick-latest.zip
+unzip -o limbostick-latest.zip
+```
+
+```
+docker compose pull
+docker compose up -d
+```
+
 While Limbo itself can be installed on any host and doesn't need to be next to Lidarr, the special Limbo Stick container does. It's a helper that allows Limbo direct control over Lidarr's environment, to add theme support, built-in download buttons and the ability to start/stop/pause tasks.
-
-## Wrap-Up
-
-You can monitor the progress of the long first-time installation jobs from another terminal:
-
-```
-docker compose logs -f --timestamps
-```
-
-Or with less "noise:"
-
-```
-docker compose logs -f --no-log-prefix --tail=200 \
-  bootstrap search-bootstrap search musicbrainz indexer indexer-cron limbo
-
-```
 
 ## Browser Access
 
-- **Limbo** web UI: **http://HOST_IP:4808**
+- **Limbo** web UI: **http://LIMBO_HOST_IP:4808**
 
-- **MusicBrainz** local web site: **http://HOST_IP:4820**
+- **MusicBrainz** local web site: **http://LIMBO_HOST_IP:4820**
   <br>(Off by default, enable it in Limbo General Settings)
 
-- **Limbo Stick Status** web page: **http://HOST_IP:4810**
+- **Limbo Stick Status** web page: **http://LIDARR_HOST_IP:4810**
 
 > [!TIP]
 >
 > Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own domain to reach Limbo and MusicBrainz locally on port 80 (HTTP) or 443 (HTTPS) example: limbo.domain.net and mbrainz.domain.net
 
-### Updating
+## Updating
 
 Pull the latest images and restart two times (the first time installs updated compose file, second time uses the updatec file to put up the containers):
 
@@ -147,9 +167,13 @@ These files are automatically updated on every _docker compose up_
 
 ## Limbo Configuration
 
-Go to **http://<your_LIMBO_IP>:4808**
+Go to **http://<LIMBO_HOST_IP>:4808**
 
-Use the SETTINGS button on the top right of the webUI to configure your Lidarr IP address, port and API KEY. The API Key can be found in Lidarr's **Settings -> General** page
+Use the SETTINGS button on the top right of the webUI to access all of Limbo's settings. If you've installed Limbo Stick, Lidarr configuration is auto-discovered. Otherwise, configure your Lidarr IP:PORT and API KEY. The API Key can be found in Lidarr's **Settings -> General** page
+
+<p align="center">
+  <img src="https://github.com/HVR88/Docs-Extras/blob/master/limbo-settings1.png?raw=true" alt="Limbo Settings" width="420" />
+</p>
 
 ## Notes
 
