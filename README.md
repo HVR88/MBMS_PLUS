@@ -127,7 +127,7 @@ While Limbo itself can be installed on any host and doesn't need to be next to L
 >
 > Put a reverse proxy (NPM, Caddy, Traefik, SWAG) in front of your host IP and use your own domain to reach Limbo and MusicBrainz locally on port 80 (HTTP) or 443 (HTTPS) example: limbo.domain.net and mbrainz.domain.net
 
-### Updating
+## Updating
 
 Pull the latest images and restart two times (the first time installs updated compose file, second time uses the updatec file to put up the containers):
 
@@ -160,7 +160,7 @@ These files are automatically updated on every _docker compose up_
 
 Go to **http://<LIMBO_HOST_IP>:4808**
 
-Use the SETTINGS button on the top right of the webUI to configure your Lidarr IP address, port and API KEY. The API Key can be found in Lidarr's **Settings -> General** page
+Use the SETTINGS button on the top right of the webUI to access all of Limbo's settings. If you've installed Limbo Stick, Lidarr configuration is auto-discovered. Otherwise, configure your Lidarr IP address, port and API KEY. The API Key can be found in Lidarr's **Settings -> General** page
 
 ## Notes
 
