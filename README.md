@@ -102,7 +102,7 @@ Now type **ctrl-a** and then **d** to detach from the screen session.
 Close the terminal and monitor progress from Limbo: **http://LIMBO_HOST_IP:4808**
 
 <p align="center">
-  <img src="https://github.com/HVR88/Docs-Extras/blob/master/limbo-install-screen.png?raw=true" alt="Limbo Installation" width="300" />
+  <img src="https://github.com/HVR88/Docs-Extras/blob/master/limbo-install-screen.png?raw=true" alt="Limbo Installation" width="600" />
 </p>
 
 ### 5. Install Limbo Stick next to Lidarr
@@ -172,7 +172,7 @@ Go to **http://<LIMBO_HOST_IP>:4808**
 Use the SETTINGS button on the top right of the webUI to access all of Limbo's settings. If you've installed Limbo Stick, Lidarr configuration is auto-discovered. Otherwise, configure your Lidarr IP address, port and API KEY. The API Key can be found in Lidarr's **Settings -> General** page
 
 <p align="center">
-  <img src="https://github.com/HVR88/Docs-Extras/blob/master/limbo-settings1.png?raw=true" alt="Limbo Settings" width="300" />
+  <img src="https://github.com/HVR88/Docs-Extras/blob/master/limbo-settings1.png?raw=true" alt="Limbo Settings" width="420" />
 </p>
 
 ## Notes
