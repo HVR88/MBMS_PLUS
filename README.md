@@ -169,7 +169,7 @@ These files are automatically updated on every _docker compose up_
 
 Go to **http://<LIMBO_HOST_IP>:4808**
 
-Use the SETTINGS button on the top right of the webUI to access all of Limbo's settings. If you've installed Limbo Stick, Lidarr configuration is auto-discovered. Otherwise, configure your Lidarr IP address, port and API KEY. The API Key can be found in Lidarr's **Settings -> General** page
+Use the SETTINGS button on the top right of the webUI to access all of Limbo's settings. If you've installed Limbo Stick, Lidarr configuration is auto-discovered. Otherwise, configure your Lidarr IP:PORT and API KEY. The API Key can be found in Lidarr's **Settings -> General** page
 
 <p align="center">
   <img src="https://github.com/HVR88/Docs-Extras/blob/master/limbo-settings1.png?raw=true" alt="Limbo Settings" width="420" />
