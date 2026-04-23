@@ -1,4 +1,4 @@
-#   Limbo 1.9.423.1354
+#   Limbo 1.9.423.1359
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -92,9 +92,11 @@ x-env-lists:
     - *default_env_pg_password
 x-labels:
   managed_version: &managed_version_labels
-    com.limbo.publish.version: "1.9.423.1354"
+    com.limbo.publish.version: "1.9.423.1359"
 volumes:
   pgdata:
+    driver: local
+  redisdata:
     driver: local
   mqdata:
     driver: local
@@ -106,6 +108,8 @@ volumes:
     driver: local
   limbo_data:
     name: limbo_data
+    driver: local
+  limbo_admin:
     driver: local
   dldr_data:
     driver: local
@@ -125,7 +129,7 @@ services:
       net.unraid.docker.shell: "/bin/sh"
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.423.1354
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.423.1359
     volumes:
       - ./:/out
     restart: "no"
@@ -496,7 +500,7 @@ services:
       POSTGRES_CACHE_HOST: *default_mb_db_host
       LIMBO_MBDB_PORT: *default_limbo_mbdb_port
       LIMBO_ADMIN_BASE_URL: "http://musicbrainz:${LIMBO_ADMIN_PORT}"
-      LIMBO_DEPLOY_VERSION: "1.9.423.1354"
+      LIMBO_DEPLOY_VERSION: "1.9.423.1359"
       LIMBO_VERSION_FILE: "/limbo/VERSION"
       LIMBO_STARTUP_LOCK_DIR: "/tmp/limbo-startup-locks"
       LIMBO_GUNICORN_TIMEOUT_SECONDS: "${LIMBO_GUNICORN_TIMEOUT_SECONDS:-300}"

@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Limbo is a toolset and downloader for Lidarr music manager. It contains a full MusicBrainz mirror server with automated installation. When the Limbo Stick helper is installed next to Lidarr, many settings are auto-discovered, so you don't need to set any URLs, API keys or ports. You can start using Limbo right away.
+Limbo is a set of tools and a downloader for Lidarr music manager. It contains a full MusicBrainz mirror server with automated installation. When the Limbo Stick helper is installed next to Lidarr, many settings are auto-discovered, so you don't need to set any URLs, API keys or ports. You can start using Limbo right away.
 
 **Currently implemented features:**
 
@@ -49,7 +49,7 @@ Other features are currently in development or testing. Update notifications are
 
 ### 2. Download the Limbo compose files (no git required)
 
-Create a folder and download the latest `docker-compose.yml` and `example.env`
+Create a folder and download the latest `compose.yaml` and `example.env`
 from the Limbo release assets (or the raw files in this repo).
 
 ```bash
@@ -141,7 +141,7 @@ You should look in the _`example.env`_ file for any changes that may need to be 
 
 These files are automatically updated on every _docker compose up_
 
-- `docker-compose.yml`
+- `compose.yaml`
 - `example.env`
 - `README.md`
 
