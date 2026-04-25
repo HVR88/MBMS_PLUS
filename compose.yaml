@@ -1,4 +1,4 @@
-#   Limbo 1.9.500.1800
+#   Limbo 1.9.500.8008
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -27,6 +27,9 @@ x-dependency-items:
   limbo_host_helper_started: &dep_limbo_host_helper_started
     limbo-host-helper:
       condition: service_started
+  limbo_host_helper_healthy: &dep_limbo_host_helper_healthy
+    limbo-host-helper:
+      condition: service_healthy
   limbo_system_init_completed: &dep_limbo_system_init_completed
     limbo-system-init:
       condition: service_completed_successfully
@@ -92,7 +95,7 @@ x-env-lists:
     - *default_env_pg_password
 x-labels:
   managed_version: &managed_version_labels
-    com.limbo.publish.version: "1.9.500.1800"
+    com.limbo.publish.version: "1.9.500.8008"
 volumes:
   pgdata:
     driver: local
@@ -129,7 +132,7 @@ services:
       net.unraid.docker.shell: "/bin/sh"
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.500.1800
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.500.8008
     volumes:
       - ./:/out
     restart: "no"
@@ -428,6 +431,16 @@ services:
         target: /run/limbo-runtime
         bind:
           create_host_path: true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python3.14 -c \"import os,sys,urllib.request; port=int(os.getenv('LIMBO_HOST_HELPER_PORT','4809')); urllib.request.urlopen(f'http://127.0.0.1:{port}/healthz', timeout=2).read(); sys.exit(0)\"",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
     restart: unless-stopped
     depends_on: *assets_depends
   limbo-dldr:
@@ -500,7 +513,7 @@ services:
       POSTGRES_CACHE_HOST: *default_mb_db_host
       LIMBO_MBDB_PORT: *default_limbo_mbdb_port
       LIMBO_ADMIN_BASE_URL: "http://musicbrainz:${LIMBO_ADMIN_PORT}"
-      LIMBO_DEPLOY_VERSION: "1.9.500.1800"
+      LIMBO_DEPLOY_VERSION: "1.9.500.8008"
       LIMBO_VERSION_FILE: "/limbo/VERSION"
       LIMBO_STARTUP_LOCK_DIR: "/tmp/limbo-startup-locks"
       # --- MusicBrainz DB creds (set these to match your mirror) ---
@@ -513,7 +526,7 @@ services:
       <<:
         [
           *assets_depends,
-          *dep_limbo_host_helper_started,
+          *dep_limbo_host_helper_healthy,
           *dep_db_started,
           *dep_redis_started,
         ]
