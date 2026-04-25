@@ -123,14 +123,24 @@ docker compose up -d
 
 While Limbo itself can be installed on any host and doesn't need to be next to Lidarr, the special Limbo Stick container does. It's a helper that allows Limbo direct control over Lidarr's environment, to add theme support, built-in download buttons and the ability to start/stop/pause tasks.
 
+### 6. Finishing
+
+When Limbo installation and database indexes are complete, you'll see the message "Install complete" along with a yellow confirmation button. Press the button to finish, which will unlock the rest of the UI.
+
+<p align="center">
+  <img src="https://github.com/HVR88/Docs-Extras/blob/master/limbo-install-screen-finished.png?raw=true" alt="Limbo Installation" width="600" />
+</p>
+
 ## Browser Access
 
-- **Limbo** web UI: **http://LIMBO_HOST_IP:4808**
+- _Limbo:_ **http://LIMBO_HOST_IP:4808**
 
-- **MusicBrainz** local web site: **http://LIMBO_HOST_IP:4820**
+- _Lidarr with UI Extras:_ **http://LIDARR_HOST_IP:4811**
+
+- _Limbo Stick Status:_ **http://LIDARR_HOST_IP:4810**
+
+- _MusicBrainz local web site:_ **http://LIMBO_HOST_IP:4820**
   <br>(Off by default, enable it in Limbo General Settings)
-
-- **Limbo Stick Status** web page: **http://LIDARR_HOST_IP:4810**
 
 > [!TIP]
 >
