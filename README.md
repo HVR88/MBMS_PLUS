@@ -15,7 +15,7 @@ Limbo is a set of tools and a downloader for Lidarr music manager. It contains a
 - Release / Artist refreshing (paste URL/ID single/bulk and refresh albums/artists)
 - Artist Photos, Cover Art + Data providers selection, with drag & drop precedence
 - Lidarr control API - start/stop/restart/update Lidarr, cancel/pause scheduler tasks
-- Lidarr theme system with over 30 themes
+- Theme system with over 30 themes for Lidarr
 - SMB network browser and path mounting - no env files to edit
 
 **Features in testing:**
