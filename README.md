@@ -42,7 +42,12 @@ Other features are currently in development or testing. Update notifications are
 
 ## Quick Start
 
-### 0. Preparation
+### 1. Preparation
+
+#### Register for MusicBrainz access & token
+
+- Create an account at https://MusicBrainz.com
+- Get your _Live Data Feed Access Token_ from Metabrainz https://metabrainz.org/profile
 
 #### **Linux Host / CLI / Shell**
 
@@ -52,11 +57,6 @@ Other features are currently in development or testing. Update notifications are
 
 - Install the Compose Manager Plus plugin from Community Apps
 - You will now see a _Compose_ tab on the Docker page
-
-### 1. Register for MusicBrainz access & token
-
-- Create an account at https://MusicBrainz.com
-- Get your _Live Data Feed Access Token_ from Metabrainz https://metabrainz.org/profile
 
 ### 2. Download the Limbo compose files (no git required)
 
