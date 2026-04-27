@@ -34,10 +34,10 @@ Other features are currently in development or testing. Update notifications are
 
 ## Requirements
 
-- Linux server or VM or LXC with Docker
-- 300-400 GB of available storage (400-500 GB recommended)
+- Unraid or Linux server or VM or LXC with Docker
+- Minimum 300-500 GB of available storage
   - Additional storage for optional downloading and music sharing
-- 8 GB of memory available to the container (16GB+ recommended)
+- Minimum 8 GB of memory available to the container
 - 2-4 hours installation time
 
 ## Quick Start
@@ -74,7 +74,7 @@ unzip -o limbo-latest.zip
 
 #### **Unraid**
 
-Just copy the text of compose/yaml and example.env directly from the GitHub Repo to paste into Compose Manager Plus.
+Open the GitHub page https://github.com/HVR88/Limbo and go to step 3.
 
 ### 3. Copy and configure env file
 
@@ -92,7 +92,7 @@ Configure this variable in the .env file:
 
 #### **Unraid**
 
-Paste the contents of compose.yaml and example.env into their respective tabs, making sure to add the MusicBrainz token and SAVE.
+Copy the text of compose.yaml and example.env directly from the GitHub Repo and paste the contents into their respective tabs, making sure to add the MusicBrainz token, then SAVE.
 
 ### 4. Download containers, build DB & start up (!) _This takes 2-4 hours_
 
@@ -117,9 +117,9 @@ Close the terminal and monitor progress from Limbo: **http://LIMBO_HOST_IP:4808*
 
 #### **Unraid**
 
-Click Limbo icon in Compose Manager and select _Compose Up,_ check the _Run in Background,_ box and press the **Compose Up** button.
+Click Limbo icon in Compose Manager and select _Compose Up,_ check the _Run in Background_ box, and press the **Compose Up** button.
 
-You can monitor progress from Limbo: **http://LIMBO_HOST_IP:4808**
+You can monitor progress from your web browser in Limbo: **http://LIMBO_HOST_IP:4808**
 
 <p align="center">
   <img src="https://github.com/HVR88/Docs-Extras/blob/master/limbo-install-screen.png?raw=true" alt="Limbo Installation" width="600" />
@@ -147,7 +147,7 @@ docker compose up -d
 
 #### **Unraid**
 
-The same process as with the Limbo: copy the text of of the Limbo Stick compose.yaml and example.env directly from the GitHub Repo to the correct tabs in Compose Manager Plus, then save.
+The same process as with Limbo. Copy the text of of the Limbo Stick compose.yaml and example.env directly from the GitHub Repo to the correct tabs in Compose Manager Plus, then save. Make sure this is the same host/docker network as Lidarr.
 
 Click the Limbo Stick Icon and select Compose Up, Run in Background, and click the Compose Up Button.
 
@@ -161,13 +161,13 @@ When Limbo installation and database indexes are complete, you'll see the messag
 
 ## Browser Access
 
-- _Limbo:_ **http://LIMBO_HOST_IP:4808**
+- **_Limbo:_** **http://LIMBO_HOST_IP:4808**
 
-- _Lidarr with UI Extras:_ **http://LIDARR_HOST_IP:4811**
+- **_Lidarr with UI Extras:_** **http://LIDARR_HOST_IP:4811**
 
-- _Limbo Stick Status:_ **http://LIDARR_HOST_IP:4810**
+- **_Limbo Stick Status:_** **http://LIDARR_HOST_IP:4810**
 
-- _MusicBrainz local web site:_ **http://LIMBO_HOST_IP:4820**
+- **_Local MusicBrainz web site:_** **http://LIMBO_HOST_IP:4820**
   <br>(Off by default, enable it in Limbo General Settings)
 
 > [!TIP]
