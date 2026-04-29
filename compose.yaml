@@ -1,4 +1,4 @@
-#   Limbo 1.9.500.8212
+#   Limbo 1.9.500.8250
 # Description: Deploy compose file with managed assets sync
 #
 # THIS FILE IS REGULARLY OVERWRITTEN: It can't be modified nor manually maintained - leave it alone
@@ -95,7 +95,7 @@ x-env-lists:
     - *default_env_pg_password
 x-labels:
   managed_version: &managed_version_labels
-    com.limbo.publish.version: "1.9.500.8212"
+    com.limbo.publish.version: "1.9.500.8250"
 volumes:
   pgdata:
     driver: local
@@ -132,7 +132,7 @@ services:
       net.unraid.docker.shell: "/bin/sh"
     pull_policy: always
     environment:
-      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.500.8212
+      - LIMBO_ASSETS_DEPLOY_VERSION=1.9.500.8250
     volumes:
       - ./:/out
     restart: "no"
@@ -513,7 +513,7 @@ services:
       POSTGRES_CACHE_HOST: *default_mb_db_host
       LIMBO_MBDB_PORT: *default_limbo_mbdb_port
       LIMBO_ADMIN_BASE_URL: "http://musicbrainz:${LIMBO_ADMIN_PORT}"
-      LIMBO_DEPLOY_VERSION: "1.9.500.8212"
+      LIMBO_DEPLOY_VERSION: "1.9.500.8250"
       LIMBO_VERSION_FILE: "/limbo/VERSION"
       LIMBO_STARTUP_LOCK_DIR: "/tmp/limbo-startup-locks"
       # --- MusicBrainz DB creds (set these to match your mirror) ---
